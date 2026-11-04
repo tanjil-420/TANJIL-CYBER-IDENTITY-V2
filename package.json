@@ -6,7 +6,7 @@
   "description": "TANJIL Cyber Identity - Portfolio and Messenger Platform",
   "main": "index.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=20 <27"
   },
   "scripts": {
     "start": "node index.js",
