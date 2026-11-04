@@ -26,11 +26,11 @@ const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
 
 if (!process.env.SESSION_SECRET) {
-    throw new Error("SESSION_SECRET is missing.");
+    throw new Error(">>");
 }
 
 if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is missing.");
+    throw new Error("sqlite");
 }
 
 if (isProduction) {
