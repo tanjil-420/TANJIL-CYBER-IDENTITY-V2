@@ -115,6 +115,7 @@ async function loadProfile() {
             displayName: profile.displayName,
             location: profile.location,
             bio: profile.bio,
+            skills: Array.isArray(profile.skills) ? profile.skills.join("\n") : "",
             website: profile.website,
             avatarUrl: profile.avatarUrl,
             facebook: profile.socials?.facebook,
@@ -188,6 +189,7 @@ profileForm.addEventListener("submit", async event => {
             displayName: $("displayName").value.trim(),
             location: $("location").value.trim(),
             bio: $("bio").value.trim(),
+            skills: $("skills").value.split(/[\n,]/).map(value => value.trim()).filter(Boolean),
             website: validateOptionalUrl("website"),
             avatarUrl: validateOptionalUrl("avatarUrl"),
 

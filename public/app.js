@@ -1,242 +1,237 @@
-
 "use strict";
 
-const authModal = document.getElementById("authModal");
-const loginForm = document.getElementById("loginForm");
-const registerForm = document.getElementById("registerForm");
-const authMessage = document.getElementById("authMessage");
+const $ = id => document.getElementById(id);
+const authModal = $("authModal");
+const loginForm = $("loginForm");
+const registerForm = $("registerForm");
+const authMessage = $("authMessage");
+const menu = $("siteMenu");
+const menuButton = $("mobileMenu");
+const menuBackdrop = $("menuBackdrop");
 
-const authTabs = document.querySelectorAll("[data-auth-tab]");
-const openButtons = document.querySelectorAll("[data-open-auth]");
-
-const closeAuth = document.getElementById("closeAuth");
-const mobileMenu = document.getElementById("mobileMenu");
-const navLinks = document.querySelector(".nav-links");
-const navActions = document.getElementById("navActions");
-
-// API HELPER
 async function apiRequest(url, options = {}) {
     const response = await fetch(url, {
         credentials: "same-origin",
-
         ...options,
-
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        }
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) }
     });
-
     const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-        throw new Error(data.error || "Something went wrong.");
-    }
-
+    if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
     return data;
 }
 
-// AUTH MESSAGE
 function showAuthMessage(message, isError = false) {
     authMessage.textContent = message;
-
     authMessage.classList.toggle("error", isError);
 }
 
-// SWITCH AUTH TAB
 function switchAuthTab(tab) {
     const isLogin = tab === "login";
-
     loginForm.hidden = !isLogin;
     registerForm.hidden = isLogin;
-
-    authTabs.forEach(button => {
-        button.classList.toggle(
-            "active",
-            button.dataset.authTab === tab
-        );
+    document.querySelectorAll("[data-auth-tab]").forEach(button => {
+        button.classList.toggle("active", button.dataset.authTab === tab);
     });
-
     showAuthMessage("");
 }
 
-// OPEN AUTH MODAL
 function openAuth(tab = "login") {
+    closeMenu();
     authModal.hidden = false;
-
     document.body.style.overflow = "hidden";
-
     switchAuthTab(tab);
+    const field = authModal.querySelector(isLoginTab(tab) ? '[name="identity"]' : '[name="username"]');
+    field?.focus();
 }
 
-// CLOSE AUTH MODAL
-function closeModal() {
+function isLoginTab(tab) { return tab === "login"; }
+
+function closeAuth() {
     authModal.hidden = true;
     document.body.style.overflow = "";
-
     showAuthMessage("");
 }
 
-// OPEN BUTTONS
-openButtons.forEach(button => {
-    button.addEventListener("click", () => {
-        openAuth(button.dataset.openAuth);
-    });
-});
+function openMenu() {
+    menu.classList.add("open");
+    menuBackdrop.hidden = false;
+    menu.setAttribute("aria-hidden", "false");
+    menuButton.setAttribute("aria-expanded", "true");
+    document.body.classList.add("menu-open");
+}
 
-// TAB BUTTONS
-authTabs.forEach(button => {
-    button.addEventListener("click", () => {
-        switchAuthTab(button.dataset.authTab);
-    });
-});
+function closeMenu() {
+    menu.classList.remove("open");
+    menuBackdrop.hidden = true;
+    menu.setAttribute("aria-hidden", "true");
+    menuButton.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("menu-open");
+}
 
-// CLOSE BUTTON
-closeAuth.addEventListener("click", closeModal);
-
-// CLICK OUTSIDE
-authModal.addEventListener("click", event => {
-    if (event.target === authModal) {
-        closeModal();
-    }
-});
-
-// ESCAPE KEY
+menuButton.addEventListener("click", () => menu.classList.contains("open") ? closeMenu() : openMenu());
+$("closeMenu").addEventListener("click", closeMenu);
+menuBackdrop.addEventListener("click", closeMenu);
+menu.querySelectorAll("a").forEach(link => link.addEventListener("click", closeMenu));
+document.querySelectorAll("[data-open-auth]").forEach(button => button.addEventListener("click", () => openAuth(button.dataset.openAuth)));
+document.querySelectorAll("[data-auth-tab]").forEach(button => button.addEventListener("click", () => switchAuthTab(button.dataset.authTab)));
+$("closeAuth").addEventListener("click", closeAuth);
+authModal.addEventListener("click", event => { if (event.target === authModal) closeAuth(); });
 document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && !authModal.hidden) {
-        closeModal();
-    }
+    if (event.key === "Escape") { closeAuth(); closeMenu(); }
 });
 
-// LOGIN
-loginForm.addEventListener("submit", async event => {
-    event.preventDefault();
+function addNavButton(container, label, className, handler) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = label;
+    button.addEventListener("click", handler);
+    container.append(button);
+}
 
-    const submitButton = loginForm.querySelector(
-        'button[type="submit"]'
-    );
+function renderLoggedIn(user, profile) {
+    const navActions = $("navActions");
+    navActions.replaceChildren();
+    const dashboard = document.createElement("a");
+    dashboard.className = "nav-register";
+    dashboard.href = "/dashboard.html";
+    dashboard.textContent = "MY DASHBOARD";
+    navActions.append(dashboard);
 
-    const formData = new FormData(loginForm);
+    const menuAccount = $("menuAccount");
+    menuAccount.replaceChildren();
+    const accountLabel = document.createElement("p");
+    accountLabel.className = "menu-signed-in";
+    accountLabel.textContent = `SIGNED IN · @${user.username}`;
+    menuAccount.append(accountLabel);
+    const logout = document.createElement("button");
+    logout.className = "nav-login";
+    logout.textContent = "LOG OUT";
+    logout.addEventListener("click", logoutUser);
+    menuAccount.append(logout);
 
-    const payload = {
-        identity: formData.get("identity"),
-        password: formData.get("password")
-    };
+    document.querySelectorAll("[data-auth-only]").forEach(link => { link.hidden = false; });
+    $("memberArea").hidden = false;
+    const displayName = profile.displayName || user.username;
+    $("memberDisplayName").textContent = displayName;
+    $("memberUsername").textContent = `@${user.username}`;
+    $("memberBio").textContent = profile.bio || "Add a short introduction from Edit Profile.";
+    $("memberEducation").textContent = profile.education || "Education not added";
+    $("memberLocation").textContent = profile.location || "Location not added";
+    $("memberRole").textContent = String(user.role || "user").toUpperCase();
+    $("memberAvatar").textContent = displayName.charAt(0).toUpperCase();
+    $("heroTitle").innerHTML = `WELCOME BACK,<br><span>${escapeHtml(displayName.toUpperCase())}.</span>`;
+    $("heroUsername").textContent = `@${user.username} · YOUR PERSONAL SPACE`;
+    $("heroEyebrow").textContent = "YOUR DIGITAL IDENTITY IS ACTIVE";
+    $("systemStatus").textContent = "SIGNED IN";
+    $("heroJoinButton").hidden = true;
 
-    submitButton.disabled = true;
-    submitButton.textContent = "AUTHENTICATING...";
-
-    showAuthMessage("Connecting to identity server...");
-
-    try {
-        await apiRequest("/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify(payload)
+    const skills = Array.isArray(profile.skills) ? profile.skills : [];
+    const skillsBox = $("memberSkills");
+    skillsBox.replaceChildren();
+    if (!skills.length) {
+        const empty = document.createElement("span");
+        empty.className = "empty-chip";
+        empty.textContent = "Add your skills from Edit Profile";
+        skillsBox.append(empty);
+    } else {
+        skills.forEach(skill => {
+            const chip = document.createElement("span");
+            chip.className = "skill-chip";
+            chip.textContent = skill;
+            skillsBox.append(chip);
         });
-
-        showAuthMessage("Login successful. Loading dashboard...");
-
-        window.location.assign("/dashboard.html");
-
-    } catch (error) {
-        showAuthMessage(error.message, true);
-
-    } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "LOGIN TO ACCOUNT";
     }
-});
+}
 
-// REGISTER
-registerForm.addEventListener("submit", async event => {
-    event.preventDefault();
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
 
-    const submitButton = registerForm.querySelector(
-        'button[type="submit"]'
-    );
-
-    const formData = new FormData(registerForm);
-
-    const payload = {
-        username: formData.get("username"),
-        email: formData.get("email"),
-        password: formData.get("password")
-    };
-
-    submitButton.disabled = true;
-    submitButton.textContent = "CREATING ACCOUNT...";
-
-    showAuthMessage("Creating your digital identity...");
-
+async function logoutUser() {
     try {
-        await apiRequest("/api/auth/register", {
-            method: "POST",
-            body: JSON.stringify(payload)
-        });
-
-        showAuthMessage("Account created successfully!");
-
-        window.location.assign("/dashboard.html");
-
+        await apiRequest("/api/auth/logout", { method: "POST" });
+        window.location.replace("/");
     } catch (error) {
-        showAuthMessage(error.message, true);
-
-    } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "CREATE MY ACCOUNT";
+        const menuAccount = $("menuAccount");
+        const message = document.createElement("p");
+        message.className = "menu-error";
+        message.textContent = error.message;
+        menuAccount.append(message);
     }
-});
+}
 
-// MOBILE NAVIGATION
-mobileMenu.addEventListener("click", () => {
-    const opened = navLinks.classList.toggle("open");
+async function loadStats() {
+    try {
+        const data = await apiRequest("/api/site/stats");
+        $("visitorCount").textContent = Number(data.visitorCount).toLocaleString();
+        $("memberCount").textContent = Number(data.memberCount).toLocaleString();
+        if (data.memberNumber) {
+            $("memberNumber").textContent = `#${String(data.memberNumber).padStart(6, "0")}`;
+            $("memberNumberLabel").textContent = "YOUR MEMBER NUMBER";
+        }
+        $("heroEyebrow").textContent = `PERSONAL DIGITAL IDENTITY · ${Number(data.visitorCount).toLocaleString()} VISITORS`;
+    } catch (error) {
+        console.error("Unable to load site statistics:", error.message);
+    }
+}
 
-    mobileMenu.setAttribute(
-        "aria-expanded",
-        String(opened)
-    );
-});
-
-navLinks.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", () => {
-        navLinks.classList.remove("open");
-        mobileMenu.setAttribute("aria-expanded", "false");
-    });
-});
-
-// CHECK CURRENT LOGIN STATUS
 async function checkAuthentication() {
     try {
         const data = await apiRequest("/api/auth/me");
-
-        const user = data.user;
-
-        navActions.replaceChildren();
-
-        const dashboardLink = document.createElement("a");
-        dashboardLink.href = "/dashboard.html";
-        dashboardLink.className = "nav-register";
-        dashboardLink.textContent = "DASHBOARD";
-
-        const messengerLink = document.createElement("a");
-        messengerLink.href = "/messenger.html";
-        messengerLink.className = "nav-login";
-        messengerLink.textContent = "MESSENGER";
-
-        navActions.append(
-            dashboardLink,
-            messengerLink
-        );
-
-        const profileGreeting = document.createElement("span");
-
-        profileGreeting.textContent = `@${user.username}`;
-        profileGreeting.style.display = "none";
-
-    } catch {
-        // User is not logged in.
+        if (data.user) renderLoggedIn(data.user, data.profile || {});
+        if (data.user?.memberNumber) {
+            $("memberNumber").textContent = `#${String(data.user.memberNumber).padStart(6, "0")}`;
+            $("memberNumberLabel").textContent = "YOUR MEMBER NUMBER";
+        }
+    } catch (error) {
+        if (!/login|auth|unauthorized/i.test(error.message)) console.error("Authentication status check:", error.message);
     }
 }
 
-// INITIALIZE
+loginForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = loginForm.querySelector('[type="submit"]');
+    const formData = new FormData(loginForm);
+    button.disabled = true;
+    button.textContent = "AUTHENTICATING...";
+    showAuthMessage("Connecting to identity server...");
+    try {
+        await apiRequest("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ identity: formData.get("identity"), password: formData.get("password") })
+        });
+        showAuthMessage("Login successful. Loading your profile...");
+        window.location.replace("/");
+    } catch (error) {
+        showAuthMessage(error.message, true);
+    } finally {
+        button.disabled = false;
+        button.textContent = "LOGIN TO ACCOUNT";
+    }
+});
+
+registerForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = registerForm.querySelector('[type="submit"]');
+    const formData = new FormData(registerForm);
+    button.disabled = true;
+    button.textContent = "CREATING ACCOUNT...";
+    showAuthMessage("Creating your digital identity...");
+    try {
+        await apiRequest("/api/auth/register", {
+            method: "POST",
+            body: JSON.stringify({ username: formData.get("username"), email: formData.get("email"), password: formData.get("password") })
+        });
+        showAuthMessage("Account created. Opening your profile...");
+        window.location.replace("/");
+    } catch (error) {
+        showAuthMessage(error.message, true);
+    } finally {
+        button.disabled = false;
+        button.textContent = "CREATE MY ACCOUNT";
+    }
+});
+
+loadStats();
 checkAuthentication();

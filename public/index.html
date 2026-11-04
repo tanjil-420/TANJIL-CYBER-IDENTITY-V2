@@ -1,415 +1,141 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#080b14">
-
-    <title>TANJIL.EXE | Cyber Identity</title>
-
-    <meta name="description"
-        content="TANJIL Cyber Identity — Portfolio, Digital Identity and Messenger Platform.">
-
+    <meta name="description" content="A digital identity, portfolio, learning and community platform.">
+    <title>TANJIL.EXE | Digital Identity Platform</title>
     <link rel="stylesheet" href="/style.css">
+    <script src="/app.js" defer></script>
 </head>
-
 <body>
-
-<div class="background-grid"></div>
-<div class="ambient ambient-one"></div>
-<div class="ambient ambient-two"></div>
+<div class="background-grid" aria-hidden="true"></div>
+<div class="ambient ambient-one" aria-hidden="true"></div>
+<div class="ambient ambient-two" aria-hidden="true"></div>
 
 <header class="navbar">
-
-    <a href="/" class="logo">
-        TANJIL<span>.EXE</span>
-    </a>
-
-    <nav class="nav-links">
-        <a href="#about">ABOUT</a>
-        <a href="#interests">INTERESTS</a>
-        <a href="#social">SOCIAL</a>
-        <a href="#features">FEATURES</a>
-    </nav>
-
+    <a href="/" class="logo" aria-label="TANJIL.EXE home">TANJIL<span>.EXE</span></a>
     <div class="nav-actions" id="navActions">
-        <button class="nav-login" data-open-auth="login">
-            LOGIN
-        </button>
-
-        <button class="nav-register" data-open-auth="register">
-            JOIN NOW
-        </button>
+        <button class="nav-login" data-open-auth="login">LOGIN</button>
+        <button class="nav-register" data-open-auth="register">JOIN NOW</button>
     </div>
-
-    <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">
-        ☰
+    <button class="menu-toggle" id="mobileMenu" aria-label="Open site menu" aria-expanded="false" aria-controls="siteMenu">
+        <span></span><span></span><span></span>
     </button>
-
 </header>
 
+<div class="menu-backdrop" id="menuBackdrop" hidden></div>
+<aside class="site-menu" id="siteMenu" aria-label="Main navigation" aria-hidden="true">
+    <div class="menu-head"><span class="logo">TANJIL<span>.EXE</span></span><button id="closeMenu" class="menu-close" aria-label="Close menu">×</button></div>
+    <nav class="menu-links">
+        <a href="/#home">Home <span>01</span></a>
+        <a href="/#memberArea" data-auth-only hidden>My identity <span>02</span></a>
+        <a href="/#skills">Skills & categories <span>03</span></a>
+        <a href="/guides.html">Learning guides <span>04</span></a>
+        <a href="/#platform">Platform features <span>05</span></a>
+        <a href="/messenger.html" data-auth-only hidden>Messenger <span>06</span></a>
+        <a href="/profile.html" data-auth-only hidden>Edit profile <span>07</span></a>
+        <a href="/dashboard.html" data-auth-only hidden>Dashboard <span>08</span></a>
+        <a href="/#social">Social links <span>09</span></a>
+    </nav>
+    <div class="menu-account" id="menuAccount">
+        <button class="nav-login" data-open-auth="login">LOGIN</button>
+        <button class="nav-register" data-open-auth="register">CREATE ACCOUNT</button>
+    </div>
+</aside>
+
 <main>
-
-    <!-- HERO -->
-
     <section class="hero" id="home">
-
         <div class="hero-content">
-
-            <div class="eyebrow">
-                PERSONAL DIGITAL IDENTITY / 002
-            </div>
-
-            <div class="status-indicator">
-                <span class="status-dot"></span>
-                SYSTEM ONLINE
-            </div>
-
-            <h1>
-                TANJIL<span>🎀</span>
-            </h1>
-
-            <div class="hero-username">
-                @4x.tanjil
-            </div>
-
-            <p class="hero-description">
-                Welcome to my digital universe.
-                A personal space for creativity, technology,
-                gaming, anime and digital connections.
-            </p>
-
+            <div class="eyebrow" id="heroEyebrow">PERSONAL DIGITAL IDENTITY</div>
+            <div class="status-indicator"><span class="status-dot"></span><span id="systemStatus">SYSTEM ONLINE</span></div>
+            <p class="hero-kicker">CREATE · LEARN · CONNECT · BUILD</p>
+            <h1 id="heroTitle">YOUR DIGITAL<br><span>IDENTITY.</span></h1>
+            <div class="hero-username" id="heroUsername">A personal space for your skills, interests and ideas.</div>
+            <p class="hero-description">A modern space to present your profile, explore creative skills, follow practical learning guides and connect with other members.</p>
             <div class="hero-buttons">
-
-                <a href="#social" class="btn-primary">
-                    EXPLORE PROFILE
-                </a>
-
-                <button class="btn-secondary" data-open-auth="register">
-                    CREATE ACCOUNT
-                </button>
-
+                <a href="#skills" class="btn-primary">EXPLORE SKILLS</a>
+                <button class="btn-secondary" data-open-auth="register" id="heroJoinButton">CREATE ACCOUNT</button>
             </div>
+            <div class="hero-scroll">SCROLL TO EXPLORE <span>↓</span></div>
+        </div>
+    </section>
 
-            <div class="hero-scroll">
-                SCROLL TO EXPLORE
-                <span>↓</span>
+    <section class="stats-section" aria-label="Platform statistics">
+        <div class="stat-card"><strong id="visitorCount">—</strong><span>UNIQUE VISITORS</span></div>
+        <div class="stat-card"><strong id="memberCount">—</strong><span>REGISTERED MEMBERS</span></div>
+        <div class="stat-card"><strong id="memberNumber">GUEST</strong><span id="memberNumberLabel">YOUR MEMBERSHIP</span></div>
+    </section>
+
+    <section class="section member-section" id="memberArea" hidden>
+        <div class="section-heading"><span>// YOUR SPACE</span><h2>MY DIGITAL IDENTITY</h2></div>
+        <div class="member-panel">
+            <div class="member-avatar" id="memberAvatar">U</div>
+            <div class="member-details">
+                <p class="member-label">SIGNED IN AS</p>
+                <h2 id="memberDisplayName">Member</h2>
+                <p class="member-handle" id="memberUsername">@username</p>
+                <p id="memberBio" class="member-bio">Add a short introduction to your profile.</p>
+                <div class="member-meta"><span id="memberEducation">Education not added</span><span id="memberLocation">Location not added</span><span id="memberRole">USER</span></div>
+                <div class="skill-chips" id="memberSkills"><span class="empty-chip">Add your skills from Edit Profile</span></div>
+                <div class="member-actions"><a class="btn-primary" href="/profile.html">EDIT MY PROFILE</a><a class="btn-secondary" href="/dashboard.html">DASHBOARD</a></div>
             </div>
-
         </div>
-
     </section>
 
-    <!-- ABOUT -->
-
-    <section class="section" id="about">
-
-        <div class="section-heading">
-            <span>// 01</span>
-            <h2>PROFILE DATA</h2>
+    <section class="section" id="skills">
+        <div class="section-heading"><span>// 01</span><h2>EXPLORE SKILLS & CATEGORIES</h2></div>
+        <p class="section-intro">Open a category to get a practical beginner roadmap, recommended tools, essential skills and project ideas. Guides are public—no account required.</p>
+        <div class="category-grid">
+            <a class="category-card" href="/guides.html?topic=video-editing"><span class="category-icon">▣</span><h3>VIDEO EDITING</h3><p>Editing workflow, transitions, color grading, audio and export settings.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=graphic-design"><span class="category-icon">✳</span><h3>GRAPHIC DESIGN</h3><p>Typography, layout, color, branding and design software fundamentals.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=web-development"><span class="category-icon">&lt;/&gt;</span><h3>WEB DEVELOPMENT</h3><p>HTML, CSS, JavaScript, backend basics, databases and deployment.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=digital-art"><span class="category-icon">◇</span><h3>DIGITAL ART</h3><p>Drawing fundamentals, layers, brushes, composition and illustration.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=gaming"><span class="category-icon">⌁</span><h3>GAMING</h3><p>Performance, FPS, graphics settings, recording and practice routines.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=music"><span class="category-icon">♫</span><h3>MUSIC & AUDIO</h3><p>Recording, vocal practice, audio cleanup and beginner production.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=digital-marketing"><span class="category-icon">↗</span><h3>DIGITAL MARKETING</h3><p>Content planning, social platforms, analytics and audience growth.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
+            <a class="category-card" href="/guides.html?topic=automation"><span class="category-icon">⌘</span><h3>SOFTWARE & AUTOMATION</h3><p>Problem solving, scripting, APIs and workflow automation.</p><span class="card-link">OPEN BEGINNER GUIDE ↗</span></a>
         </div>
-
-        <div class="profile-grid">
-
-            <article class="info-card">
-                <div class="card-icon">◈</div>
-                <h3>IDENTITY</h3>
-                <p>T A N J I L 🎀</p>
-                <small>@4x.tanjil</small>
-            </article>
-
-            <article class="info-card">
-                <div class="card-icon">⌘</div>
-                <h3>EDUCATION</h3>
-                <p>Intermediate 1</p>
-            </article>
-
-            <article class="info-card">
-                <div class="card-icon">⌖</div>
-                <h3>LOCATION</h3>
-                <p>Mirpur 12, Dhaka</p>
-            </article>
-
-            <article class="info-card">
-                <div class="card-icon">✦</div>
-                <h3>STATUS</h3>
-                <p>Single</p>
-            </article>
-
-        </div>
-
     </section>
 
-    <!-- INTERESTS -->
-
-    <section class="section" id="interests">
-
-        <div class="section-heading">
-            <span>// 02</span>
-            <h2>INTERESTS & SKILLS</h2>
-        </div>
-
-        <div class="interest-grid">
-
-            <article class="interest-card">
-                <span>🎬</span>
-                <h3>VIDEO EDITING</h3>
-                <p>Creative video production and visual storytelling.</p>
-            </article>
-
-            <article class="interest-card">
-                <span>🎨</span>
-                <h3>DIGITAL ART</h3>
-                <p>Graphics design, illustration and visual creativity.</p>
-            </article>
-
-            <article class="interest-card">
-                <span>🎮</span>
-                <h3>GAMING</h3>
-                <p>Gaming, performance and digital entertainment.</p>
-            </article>
-
-            <article class="interest-card">
-                <span>🌌</span>
-                <h3>ANIME</h3>
-                <p>Anime, animation and futuristic aesthetics.</p>
-            </article>
-
-            <article class="interest-card">
-                <span>💻</span>
-                <h3>TECHNOLOGY</h3>
-                <p>Software, coding and automation.</p>
-            </article>
-
-            <article class="interest-card">
-                <span>🎧</span>
-                <h3>MUSIC</h3>
-                <p>Music, creative audio and vocal covers.</p>
-            </article>
-
-        </div>
-
-    </section>
-
-    <!-- FEATURES -->
-
-    <section class="section" id="features">
-
-        <div class="section-heading">
-            <span>// 03</span>
-            <h2>CYBER PLATFORM</h2>
-        </div>
-
+    <section class="section" id="platform">
+        <div class="section-heading"><span>// 02</span><h2>ONE PLATFORM, MANY POSSIBILITIES</h2></div>
         <div class="feature-grid">
-
-            <article class="feature-card">
-                <span>👤</span>
-                <h3>PERSONAL PORTFOLIO</h3>
-                <p>Create your own digital identity.</p>
-            </article>
-
-            <article class="feature-card">
-                <span>▦</span>
-                <h3>CUSTOM QR</h3>
-                <p>Generate your own personal QR code.</p>
-            </article>
-
-            <article class="feature-card">
-                <span>💬</span>
-                <h3>MESSENGER</h3>
-                <p>Connect through private and group conversations.</p>
-            </article>
-
-            <article class="feature-card">
-                <span>🎨</span>
-                <h3>CUSTOM THEMES</h3>
-                <p>Personalize your portfolio appearance.</p>
-            </article>
-
+            <article class="feature-card"><span>◈</span><h3>PERSONAL PORTFOLIO</h3><p>Build a profile that presents your interests, skills and links.</p></article>
+            <article class="feature-card"><span>▦</span><h3>PERSONAL QR</h3><p>Share a QR code that opens your public profile.</p></article>
+            <article class="feature-card"><span>⌁</span><h3>MESSENGER</h3><p>Connect through private and group conversations.</p></article>
+            <article class="feature-card"><span>✧</span><h3>PROFILE THEMES</h3><p>Personalize your digital identity with a visual style.</p></article>
         </div>
-
     </section>
-
-    <!-- SOCIAL -->
 
     <section class="section" id="social">
-
-        <div class="section-heading">
-            <span>// 04</span>
-            <h2>SOCIAL CONNECTIONS</h2>
-        </div>
-
+        <div class="section-heading"><span>// 03</span><h2>CONNECT</h2></div>
+        <p class="section-intro">Explore the learning guides, create an account or connect with the platform owner.</p>
         <div class="social-grid">
-
-            <a href="https://www.facebook.com/4x.tanjil"
-                target="_blank" rel="noopener">
-                FACEBOOK ↗
-            </a>
-
-            <a href="https://www.instagram.com/tanjil.4xx"
-                target="_blank" rel="noopener">
-                INSTAGRAM ↗
-            </a>
-
-            <a href="https://www.threads.com/@tanjil.4xx"
-                target="_blank" rel="noopener">
-                THREADS ↗
-            </a>
-
-            <a href="https://www.tiktok.com/@tanjil.4x"
-                target="_blank" rel="noopener">
-                TIKTOK ↗
-            </a>
-
-            <a href="https://github.com/tanjil-420"
-                target="_blank" rel="noopener">
-                GITHUB ↗
-            </a>
-
+            <a href="https://github.com/tanjil-420" target="_blank" rel="noopener">GITHUB ↗</a>
+            <a href="https://www.facebook.com/4x.tanjil" target="_blank" rel="noopener">FACEBOOK ↗</a>
+            <a href="https://www.instagram.com/tanjil.4xx" target="_blank" rel="noopener">INSTAGRAM ↗</a>
+            <a href="https://www.tiktok.com/@tanjil.4x" target="_blank" rel="noopener">TIKTOK ↗</a>
+            <a href="/guides.html">LEARNING GUIDES ↗</a>
         </div>
-
     </section>
 
-    <!-- CTA -->
-
-    <section class="cta-section">
-
-        <div class="eyebrow">YOUR DIGITAL IDENTITY STARTS HERE</div>
-
-        <h2>CREATE YOUR OWN UNIVERSE.</h2>
-
-        <p>Join the platform and build your personal portfolio.</p>
-
-        <button class="btn-primary" data-open-auth="register">
-            GET STARTED →
-        </button>
-
-    </section>
-
+    <section class="cta-section"><div class="eyebrow">YOUR DIGITAL IDENTITY STARTS HERE</div><h2>BUILD YOUR OWN SPACE.</h2><p>Create a profile, add your skills and connect with the community.</p><button class="btn-primary" data-open-auth="register">JOIN THE PLATFORM →</button></section>
 </main>
 
-<footer class="footer">
-
-    <div class="logo">TANJIL<span>.EXE</span></div>
-
-    <p>© 2026 TANJIL CYBER IDENTITY</p>
-
-    <small>DESIGNED IN NEON · POWERED BY TECHNOLOGY</small>
-
-</footer>
-
-
-<!-- AUTHENTICATION MODAL -->
+<footer class="footer"><a href="/" class="logo">TANJIL<span>.EXE</span></a><p>© 2026 TANJIL CYBER IDENTITY</p><small>DESIGNED IN NEON · POWERED BY TECHNOLOGY</small></footer>
 
 <div class="modal-overlay" id="authModal" hidden>
-
-    <div class="auth-modal">
-
-        <button class="modal-close" id="closeAuth" aria-label="Close">
-            ×
-        </button>
-
+    <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <button class="modal-close" id="closeAuth" aria-label="Close">×</button>
         <div class="auth-logo">TANJIL<span>.EXE</span></div>
-
-        <div class="auth-tabs">
-
-            <button class="auth-tab active" data-auth-tab="login">
-                LOGIN
-            </button>
-
-            <button class="auth-tab" data-auth-tab="register">
-                REGISTER
-            </button>
-
-        </div>
-
-        <form id="loginForm" class="auth-form">
-
-            <h2>WELCOME BACK</h2>
-
-            <label>USERNAME OR EMAIL</label>
-
-            <input
-                type="text"
-                name="identity"
-                placeholder="Enter username or email"
-                autocomplete="username"
-                required
-            >
-
-            <label>PASSWORD</label>
-
-            <input
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                autocomplete="current-password"
-                required
-            >
-
-            <button type="submit" class="btn-primary">
-                LOGIN TO ACCOUNT
-            </button>
-
-        </form>
-
-
-        <form id="registerForm" class="auth-form" hidden>
-
-            <h2>CREATE YOUR IDENTITY</h2>
-
-            <label>USERNAME</label>
-
-            <input
-                type="text"
-                name="username"
-                placeholder="Choose username"
-                minlength="3"
-                maxlength="30"
-                autocomplete="username"
-                required
-            >
-
-            <label>EMAIL ADDRESS</label>
-
-            <input
-                type="email"
-                name="email"
-                placeholder="Enter email"
-                autocomplete="email"
-                required
-            >
-
-            <label>PASSWORD</label>
-
-            <input
-                type="password"
-                name="password"
-                placeholder="Minimum 10 characters"
-                minlength="10"
-                maxlength="72"
-                autocomplete="new-password"
-                required
-            >
-
-            <button type="submit" class="btn-primary">
-                CREATE MY ACCOUNT
-            </button>
-
-        </form>
-
+        <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">LOGIN</button><button class="auth-tab" data-auth-tab="register">REGISTER</button></div>
+        <form id="loginForm" class="auth-form"><h2 id="authTitle">WELCOME BACK</h2><label for="loginIdentity">USERNAME OR EMAIL</label><input id="loginIdentity" type="text" name="identity" placeholder="Enter username or email" autocomplete="username" required><label for="loginPassword">PASSWORD</label><input id="loginPassword" type="password" name="password" placeholder="Enter password" autocomplete="current-password" required><button type="submit" class="btn-primary">LOGIN TO ACCOUNT</button></form>
+        <form id="registerForm" class="auth-form" hidden><h2>CREATE YOUR IDENTITY</h2><label for="registerUsername">USERNAME</label><input id="registerUsername" type="text" name="username" minlength="3" maxlength="30" placeholder="Choose username" autocomplete="username" required><label for="registerEmail">EMAIL ADDRESS</label><input id="registerEmail" type="email" name="email" maxlength="255" placeholder="Enter email" autocomplete="email" required><label for="registerPassword">PASSWORD</label><input id="registerPassword" type="password" name="password" minlength="10" maxlength="72" placeholder="Minimum 10 characters" autocomplete="new-password" required><button type="submit" class="btn-primary">CREATE MY ACCOUNT</button></form>
         <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
-
-        <div class="auth-footer">
-            CYBER IDENTITY SYSTEM / 002
-        </div>
-
+        <div class="auth-footer">SECURE DIGITAL IDENTITY SYSTEM</div>
     </div>
-
 </div>
-
-<script src="/app.js" defer></script>
-
 </body>
 </html>

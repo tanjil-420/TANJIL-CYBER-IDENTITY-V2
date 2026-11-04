@@ -1,167 +1,142 @@
-
 const express = require("express");
 const { pool } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
-
-const allowedLinks = [
-    "facebook",
-    "instagram",
-    "threads",
-    "tiktok",
-    "github",
-    "website",
-    "youtube"
-];
+const socialKeys = ["facebook", "instagram", "threads", "tiktok", "github", "whatsapp", "youtube"];
 
 function clean(value, maxLength) {
-    return typeof value === "string"
-        ? value.trim().slice(0, maxLength)
-        : "";
+    return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function validateLinks(input) {
-    const result = {};
-
-    for (const key of allowedLinks) {
-        const value = clean(input?.[key], 500);
-
-        if (!value) continue;
-
-        try {
-            const url = new URL(value);
-
-            if (url.protocol !== "https:") {
-                throw new Error("Only HTTPS links are allowed.");
-            }
-
-            result[key] = url.href;
-
-        } catch {
-            throw new Error(`Invalid ${key} URL.`);
-        }
+function validHttpsUrl(value, label) {
+    if (!value) return "";
+    try {
+        const url = new URL(value);
+        if (url.protocol !== "https:") throw new Error();
+        return url.href;
+    } catch {
+        throw new Error(`Invalid ${label} URL. Use a valid HTTPS link.`);
     }
+}
 
-    return result;
+function normalizeProfile(row) {
+    const links = row.links || {};
+    const socials = {};
+    for (const key of socialKeys) socials[key] = links[key] || "";
+    return {
+        displayName: row.display_name || "",
+        bio: row.bio || "",
+        age: row.age || "",
+        education: row.education || "",
+        location: row.location || "",
+        status: row.status || "",
+        phone: row.phone || "",
+        publicEmail: row.public_email === true,
+        publicPhone: row.public_phone === true,
+        website: links.website || "",
+        avatarUrl: row.avatar_url || "",
+        socials,
+        skills: Array.isArray(row.skills) ? row.skills : [],
+        isPublic: row.is_public !== false,
+        theme: row.theme || "cyberpunk"
+    };
 }
 
 // GET MY PROFILE
 router.get("/me", requireAuth, async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT u.username, u.email,
-                    p.display_name, p.bio, p.age,
-                    p.education, p.location, p.status,
-                    p.phone, p.public_email, p.public_phone,
-                    p.links, p.theme, p.is_public
+            `SELECT u.id, u.username, u.email,
+                    p.display_name, p.bio, p.age, p.education,
+                    p.location, p.status, p.phone, p.public_email,
+                    p.public_phone, p.links, p.skills, p.avatar_url,
+                    p.theme, p.is_public
              FROM users u
              JOIN profiles p ON p.user_id = u.id
              WHERE u.id = $1`,
             [req.user.id]
         );
-
-        if (!result.rows.length) {
-            return res.status(404).json({
-                error: "Profile not found."
-            });
-        }
-
+        if (!result.rows.length) return res.status(404).json({ error: "Profile not found." });
+        const row = result.rows[0];
         res.json({
-            profile: result.rows[0]
+            user: { id: row.id, username: row.username, email: row.email, role: req.user.role },
+            profile: normalizeProfile(row),
+            publicProfileUrl: `/public-profile.html?username=${encodeURIComponent(row.username)}`
         });
-
     } catch (error) {
         next(error);
     }
 });
 
-// UPDATE MY PROFILE
-router.put("/me", requireAuth, async (req, res, next) => {
+// UPDATE MY PROFILE (supports the current profile editor payload)
+async function updateMyProfile(req, res, next) {
     try {
-        const links = validateLinks(req.body.links || {});
-
         const displayName = clean(req.body.displayName, 80);
         const bio = clean(req.body.bio, 500);
-        const age = clean(req.body.age, 20);
-        const education = clean(req.body.education, 100);
         const location = clean(req.body.location, 150);
+        const education = clean(req.body.education, 100);
         const status = clean(req.body.status, 50);
+        const age = clean(req.body.age, 20);
         const phone = clean(req.body.phone, 30);
+        const website = validHttpsUrl(clean(req.body.website, 500), "website");
+        const avatarUrl = validHttpsUrl(clean(req.body.avatarUrl, 1000), "avatar");
+        const socialsInput = req.body.socials || req.body.links || {};
+        const links = { website };
+        for (const key of socialKeys) {
+            links[key] = validHttpsUrl(clean(socialsInput[key], 500), key);
+        }
 
-        const publicEmail = req.body.publicEmail === true;
-        const publicPhone = req.body.publicPhone === true;
+        const skillsInput = Array.isArray(req.body.skills)
+            ? req.body.skills
+            : typeof req.body.skills === "string"
+                ? req.body.skills.split(/[\n,]/)
+                : [];
+        const skills = [...new Set(skillsInput.map(value => clean(value, 50)).filter(Boolean))].slice(0, 30);
+        const isPublic = typeof req.body.isPublic === "boolean" ? req.body.isPublic : true;
 
-        const theme = clean(req.body.theme, 30) || "cyberpunk";
-
-        await pool.query(
+        const result = await pool.query(
             `UPDATE profiles
              SET display_name = $1,
                  bio = $2,
-                 age = $3,
-                 education = $4,
-                 location = $5,
-                 status = $6,
-                 phone = $7,
-                 public_email = $8,
-                 public_phone = $9,
-                 links = $10::jsonb,
-                 theme = $11,
+                 location = $3,
+                 education = COALESCE(NULLIF($4, ''), education),
+                 status = COALESCE(NULLIF($5, ''), status),
+                 age = COALESCE(NULLIF($6, ''), age),
+                 phone = COALESCE(NULLIF($7, ''), phone),
+                 links = $8::jsonb,
+                 avatar_url = NULLIF($9, ''),
+                 skills = $10::jsonb,
+                 is_public = $11,
                  updated_at = NOW()
-             WHERE user_id = $12`,
-            [
-                displayName,
-                bio,
-                age,
-                education,
-                location,
-                status,
-                phone,
-                publicEmail,
-                publicPhone,
-                JSON.stringify(links),
-                theme,
-                req.user.id
-            ]
+             WHERE user_id = $12
+             RETURNING *`,
+            [displayName, bio, location, education, status, age, phone,
+                JSON.stringify(links), avatarUrl, JSON.stringify(skills), isPublic, req.user.id]
         );
 
+        if (!result.rows.length) return res.status(404).json({ error: "Profile not found." });
         res.json({
             success: true,
-            message: "Profile updated successfully."
+            message: "Profile updated successfully.",
+            profile: normalizeProfile(result.rows[0]),
+            publicProfileUrl: `/public-profile.html?username=${encodeURIComponent(req.user.username)}`
         });
-
     } catch (error) {
-        if (error.message.startsWith("Invalid ")) {
-            return res.status(400).json({
-                error: error.message
-            });
-        }
-
+        if (error.message.startsWith("Invalid ")) return res.status(400).json({ error: error.message });
         next(error);
     }
-});
+}
+
+router.put("/me", requireAuth, updateMyProfile);
+router.patch("/me", requireAuth, updateMyProfile);
 
 // CHANGE PUBLIC VISIBILITY
 router.patch("/visibility", requireAuth, async (req, res, next) => {
     try {
-        if (typeof req.body.isPublic !== "boolean") {
-            return res.status(400).json({
-                error: "Invalid visibility setting."
-            });
-        }
-
-        await pool.query(
-            `UPDATE profiles
-             SET is_public = $1, updated_at = NOW()
-             WHERE user_id = $2`,
-            [req.body.isPublic, req.user.id]
-        );
-
-        res.json({
-            success: true,
-            isPublic: req.body.isPublic
-        });
-
+        if (typeof req.body.isPublic !== "boolean") return res.status(400).json({ error: "Invalid visibility setting." });
+        await pool.query("UPDATE profiles SET is_public = $1, updated_at = NOW() WHERE user_id = $2", [req.body.isPublic, req.user.id]);
+        res.json({ success: true, isPublic: req.body.isPublic });
     } catch (error) {
         next(error);
     }
@@ -170,53 +145,23 @@ router.patch("/visibility", requireAuth, async (req, res, next) => {
 // PUBLIC PROFILE
 router.get("/public/:username", async (req, res, next) => {
     try {
-        const username = String(req.params.username)
-            .trim()
-            .toLowerCase();
-
+        const username = String(req.params.username || "").trim().toLowerCase();
         const result = await pool.query(
-            `SELECT
-                u.username,
-                u.email,
-                p.display_name,
-                p.bio,
-                p.age,
-                p.education,
-                p.location,
-                p.status,
-                p.phone,
-                p.public_phone,
-                p.public_email,
-                p.links,
-                p.theme
+            `SELECT u.username, u.email, p.display_name, p.bio, p.age,
+                    p.education, p.location, p.status, p.phone,
+                    p.public_phone, p.public_email, p.links, p.skills,
+                    p.avatar_url, p.theme
              FROM users u
              JOIN profiles p ON p.user_id = u.id
-             WHERE u.username = $1
-             AND u.is_active = TRUE
-             AND p.is_public = TRUE`,
+             WHERE u.username = $1 AND u.is_active = TRUE AND p.is_public = TRUE`,
             [username]
         );
-
-        if (!result.rows.length) {
-            return res.status(404).json({
-                error: "Public profile not found."
-            });
-        }
-
-        const profile = result.rows[0];
-
-        if (!profile.public_phone) {
-            profile.phone = null;
-        }
-
-        if (!profile.public_email) {
-            profile.email = null;
-        }
-
-        res.json({
-            profile
-        });
-
+        if (!result.rows.length) return res.status(404).json({ error: "Public profile not found." });
+        const row = result.rows[0];
+        const profile = normalizeProfile({ ...row, is_public: true });
+        if (!row.public_phone) profile.phone = null;
+        const email = row.public_email ? row.email : null;
+        res.json({ success: true, profile: { ...profile, username: row.username, email } });
     } catch (error) {
         next(error);
     }

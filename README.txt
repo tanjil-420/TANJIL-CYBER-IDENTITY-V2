@@ -1,20 +1,30 @@
-TANJIL.EXE MESSENGER FINAL FRONTEND
+TANJIL.EXE — CYBER IDENTITY PLATFORM v2.1
 
-Files:
-public/messenger.html
-public/css/messenger.css
-public/js/messenger.js
+A Node.js + Express + PostgreSQL platform for personal profiles, public learning guides, visitor/member statistics and private/group messaging.
 
-Copy these into your existing project's public folder, preserving the css and js subfolders.
-Open /messenger.html after logging in.
+REQUIREMENTS
+- Node.js >=20 and <27
+- PostgreSQL
 
-Backend API assumptions based on the existing routes shared in the conversation:
-GET  /api/auth/me
-GET  /api/chat/conversations
-GET  /api/chat/:id/messages
-GET  /api/chat/users?q=
-POST /api/chat/private        { userId }
-POST /api/chat/groups         { name, memberIds }
-Socket events: chat:sync, chat:join, chat:send, chat:new, chat:read, chat:read:update
+ENVIRONMENT
+Create .env locally from .env.example. Configure DATABASE_URL, SESSION_SECRET, NODE_ENV and APP_URL. Never commit .env or expose database credentials/session secrets.
 
-Important: the supplied backend auth route must expose GET /api/auth/me with a user object containing id and username. If its actual endpoint/response differs, adjust loadCurrentUser() in messenger.js.
+DATABASE
+At startup, index.js applies database/schema.sql. The configured database user needs DDL permission. The schema uses CREATE TABLE IF NOT EXISTS and adds missing profile columns without deleting existing rows.
+
+LOCAL START
+npm install
+npm run dev
+Open http://localhost:3000
+
+RENDER
+Set environment variables in the Web Service Environment settings. Use the Internal Database URL when the app and PostgreSQL are in the same Render region. APP_URL must be the deployed website URL. After deployment, check /api/health.
+
+FEATURES
+- Register/login with PostgreSQL-backed sessions
+- User profile and skills on the homepage after login
+- Public beginner skill guides
+- Unique visitor and registered member counters
+- Public profile and QR code
+- Private/group Messenger with Socket.IO
+- Admin API
