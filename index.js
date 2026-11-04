@@ -133,26 +133,49 @@ app.use("/api/qr", qrRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
 
-// HEALTH CHECK
+
+// DATABASE AND SCHEMA HEALTH CHECK
 app.get("/api/health", async (req, res) => {
     try {
-        await pool.query("SELECT 1");
+        const db = await pool.query("SELECT 1");
 
-        res.json({
-            status: "online",
+        const result = await pool.query(`
+            SELECT
+                to_regclass('public.users') IS NOT NULL AS users,
+                to_regclass('public.profiles') IS NOT NULL AS profiles,
+                to_regclass('public.conversations') IS NOT NULL AS conversations,
+                to_regclass('public.conversation_members') IS NOT NULL AS conversation_members,
+                to_regclass('public.messages') IS NOT NULL AS messages,
+                to_regclass('public.user_sessions') IS NOT NULL AS user_sessions
+        `);
+
+        const tables = result.rows[0];
+
+        const missingTables = Object.entries(tables)
+            .filter(([name, exists]) => !exists)
+            .map(([name]) => name);
+
+        const schemaReady = missingTables.length === 0;
+
+        res.status(schemaReady ? 200 : 503).json({
+            status: schemaReady ? "online" : "incomplete",
             project: "TANJIL CYBER IDENTITY",
             version: "2.0.0",
             database: "connected",
+            schema: schemaReady ? "ready" : "incomplete",
+            tables,
+            missingTables,
             messenger: "enabled",
             timestamp: new Date().toISOString()
         });
 
     } catch (error) {
-        console.error("HEALTH CHECK FAILED:", error.message);
+        console.error("HEALTH CHECK FAILED:", error);
 
         res.status(503).json({
             status: "offline",
-            database: "disconnected"
+            database: "disconnected",
+            error: "Database health check failed."
         });
     }
 });
