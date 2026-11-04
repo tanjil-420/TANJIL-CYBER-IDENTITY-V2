@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b14">
+
+    <title>My Profile | TANJIL.EXE</title>
+
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body class="dashboard-body">
+
+<div class="background-grid"></div>
+
+<header class="profile-topbar">
+
+    <a href="/dashboard.html" class="logo">
+        TANJIL<span>.EXE</span>
+    </a>
+
+    <a href="/dashboard.html" class="back-dashboard">
+        ← BACK TO DASHBOARD
+    </a>
+
+</header>
+
+
+<main class="profile-editor">
+
+    <div class="profile-page-heading">
+
+        <span class="dashboard-eyebrow">
+            PERSONALIZATION / 001
+        </span>
+
+        <h1>MY DIGITAL IDENTITY</h1>
+
+        <p>Customize your public portfolio and social presence.</p>
+
+    </div>
+
+
+    <!-- PROFILE PREVIEW -->
+
+    <section class="profile-preview-panel">
+
+        <div class="preview-avatar" id="previewAvatar">
+            T
+        </div>
+
+        <h2 id="previewName">YOUR NAME</h2>
+
+        <p id="previewUsername">@username</p>
+
+        <p id="previewBio">
+            Your personal introduction goes here.
+        </p>
+
+        <span class="preview-label">
+            LIVE PROFILE PREVIEW
+        </span>
+
+    </section>
+
+
+    <!-- PROFILE FORM -->
+
+    <section class="profile-form-panel">
+
+        <div class="dashboard-section-title">
+            <h2>EDIT PROFILE</h2>
+            <span>// 01</span>
+        </div>
+
+        <form id="profileForm">
+
+            <div class="profile-form-grid">
+
+                <div class="profile-field">
+                    <label for="displayName">DISPLAY NAME</label>
+
+                    <input
+                        id="displayName"
+                        name="displayName"
+                        type="text"
+                        maxlength="60"
+                        placeholder="Your display name"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="location">LOCATION</label>
+
+                    <input
+                        id="location"
+                        name="location"
+                        type="text"
+                        maxlength="100"
+                        placeholder="Your city or country"
+                    >
+                </div>
+
+                <div class="profile-field full-field">
+                    <label for="bio">BIO / ABOUT ME</label>
+
+                    <textarea
+                        id="bio"
+                        name="bio"
+                        maxlength="500"
+                        rows="5"
+                        placeholder="Write something about yourself..."
+                    ></textarea>
+
+                    <small>Maximum 500 characters.</small>
+                </div>
+
+                <div class="profile-field">
+                    <label for="website">PERSONAL WEBSITE</label>
+
+                    <input
+                        id="website"
+                        name="website"
+                        type="url"
+                        maxlength="255"
+                        placeholder="https://example.com"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="avatarUrl">AVATAR IMAGE URL</label>
+
+                    <input
+                        id="avatarUrl"
+                        name="avatarUrl"
+                        type="url"
+                        maxlength="500"
+                        placeholder="https://example.com/image.jpg"
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-section-title form-section-title">
+                <h2>SOCIAL CONNECTIONS</h2>
+                <span>// 02</span>
+            </div>
+
+            <div class="profile-form-grid">
+
+                <div class="profile-field">
+                    <label for="facebook">FACEBOOK</label>
+
+                    <input
+                        id="facebook"
+                        type="url"
+                        placeholder="https://facebook.com/username"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="instagram">INSTAGRAM</label>
+
+                    <input
+                        id="instagram"
+                        type="url"
+                        placeholder="https://instagram.com/username"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="threads">THREADS</label>
+
+                    <input
+                        id="threads"
+                        type="url"
+                        placeholder="https://threads.com/@username"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="tiktok">TIKTOK</label>
+
+                    <input
+                        id="tiktok"
+                        type="url"
+                        placeholder="https://tiktok.com/@username"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="github">GITHUB</label>
+
+                    <input
+                        id="github"
+                        type="url"
+                        placeholder="https://github.com/username"
+                    >
+                </div>
+
+                <div class="profile-field">
+                    <label for="whatsapp">WHATSAPP</label>
+
+                    <input
+                        id="whatsapp"
+                        type="url"
+                        placeholder="https://wa.me/..."
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-section-title form-section-title">
+                <h2>PORTFOLIO SETTINGS</h2>
+                <span>// 03</span>
+            </div>
+
+            <div class="profile-settings">
+
+                <label class="setting-row">
+                    <span>
+                        <strong>PUBLIC PROFILE</strong>
+                        <small>Allow other users to view your portfolio.</small>
+                    </span>
+
+                    <input type="checkbox" id="isPublic" checked>
+                </label>
+
+            </div>
+
+
+            <div class="profile-form-actions">
+
+                <button type="submit" class="dashboard-button">
+                    SAVE CHANGES
+                </button>
+
+                <a href="/dashboard.html"
+                    class="dashboard-button secondary">
+                    CANCEL
+                </a>
+
+            </div>
+
+            <p id="profileFeedback"
+                class="dashboard-feedback"
+                role="status"
+                aria-live="polite"></p>
+
+        </form>
+
+    </section>
+
+
+    <!-- PUBLIC PROFILE LINK -->
+
+    <section class="profile-link-panel">
+
+        <h2>YOUR PUBLIC PROFILE</h2>
+
+        <p id="profilePublicUrl">
+            Your profile link will appear here.
+        </p>
+
+        <button id="copyPublicUrl"
+            class="dashboard-button secondary">
+            COPY PROFILE LINK
+        </button>
+
+    </section>
+
+
+    <footer class="dashboard-footer">
+        TANJIL.EXE · PERSONAL PROFILE EDITOR · 2026
+    </footer>
+
+</main>
+
+
+<script src="/js/profile.js" defer></script>
+
+</body>
+</html>
