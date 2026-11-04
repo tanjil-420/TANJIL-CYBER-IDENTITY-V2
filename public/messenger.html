@@ -44,12 +44,11 @@
 
 </header>
 
-
 <main class="messenger-layout">
 
     <!-- LEFT SIDEBAR -->
 
-    <aside class="chat-sidebar">
+    <aside class="chat-sidebar" id="chatSidebar">
 
         <div class="chat-sidebar-heading">
 
@@ -58,13 +57,25 @@
                 <small>YOUR CONNECTIONS</small>
             </div>
 
-            <button id="newChatButton" class="new-chat-button"
-                aria-label="Start a new conversation">
-                +
-            </button>
+            <div>
+                <button
+                    id="newChatButton"
+                    class="new-chat-button"
+                    aria-label="Start private conversation"
+                    title="New Private Chat">
+                    +
+                </button>
+
+                <button
+                    id="groupChatButton"
+                    class="new-chat-button"
+                    aria-label="Create group"
+                    title="Create Group">
+                    #
+                </button>
+            </div>
 
         </div>
-
 
         <!-- SEARCH -->
 
@@ -80,7 +91,6 @@
             <div id="searchResults" class="search-results"></div>
 
         </div>
-
 
         <!-- TABS -->
 
@@ -100,7 +110,6 @@
 
         </div>
 
-
         <!-- CONVERSATIONS -->
 
         <div class="conversation-list" id="conversationList">
@@ -111,6 +120,7 @@
 
         </div>
 
+        <!-- USER FOOTER -->
 
         <div class="chat-sidebar-footer">
 
@@ -133,7 +143,6 @@
 
     </aside>
 
-
     <!-- CHAT AREA -->
 
     <section class="chat-main" id="chatMain">
@@ -149,13 +158,13 @@
                 to connect with someone.
             </p>
 
-            <button class="chat-primary-button"
+            <button
+                class="chat-primary-button"
                 id="emptyNewChat">
                 START CONVERSATION
             </button>
 
         </div>
-
 
         <!-- ACTIVE CHAT -->
 
@@ -171,6 +180,7 @@
 
                     <div>
                         <h3 id="activeChatName">Username</h3>
+
                         <small id="activeChatStatus">
                             CONVERSATION
                         </small>
@@ -180,7 +190,8 @@
 
                 <div class="active-chat-actions">
 
-                    <button id="chatInfoButton"
+                    <button
+                        id="chatInfoButton"
                         title="Conversation information">
                         ⓘ
                     </button>
@@ -189,10 +200,11 @@
 
             </header>
 
-
             <!-- MESSAGES -->
 
-            <div class="message-container" id="messageContainer"
+            <div
+                class="message-container"
+                id="messageContainer"
                 aria-live="polite">
 
                 <div class="message-loading">
@@ -201,20 +213,22 @@
 
             </div>
 
-
             <!-- TYPING STATUS -->
 
-            <div class="typing-indicator" id="typingIndicator"
+            <div
+                class="typing-indicator"
+                id="typingIndicator"
                 hidden>
                 Someone is typing...
             </div>
-
 
             <!-- MESSAGE COMPOSER -->
 
             <form class="message-composer" id="messageForm">
 
-                <button type="button" id="emojiButton"
+                <button
+                    type="button"
+                    id="emojiButton"
                     title="Emoji">
                     ☺
                 </button>
@@ -227,7 +241,9 @@
                     required
                 ></textarea>
 
-                <button type="submit" id="sendMessageButton"
+                <button
+                    type="submit"
+                    id="sendMessageButton"
                     title="Send message">
                     ➤
                 </button>
@@ -242,18 +258,20 @@
 
     </section>
 
-
     <!-- RIGHT INFORMATION PANEL -->
 
     <aside class="chat-info-panel" id="chatInfoPanel">
 
         <div class="info-panel-heading">
+
             <h3>DETAILS</h3>
 
-            <button id="closeInfoPanel"
+            <button
+                id="closeInfoPanel"
                 aria-label="Close details">
                 ×
             </button>
+
         </div>
 
         <div class="chat-info-content" id="chatInfoContent">
@@ -269,14 +287,14 @@
 
 </main>
 
-
-<!-- NEW GROUP MODAL -->
+<!-- GROUP MODAL -->
 
 <div class="chat-modal-overlay" id="groupModal" hidden>
 
     <div class="chat-modal">
 
-        <button class="chat-modal-close"
+        <button
+            class="chat-modal-close"
             data-close-modal="groupModal">
             ×
         </button>
@@ -297,19 +315,22 @@
                 required
             >
 
-            <label for="groupMembers">MEMBER USERNAMES</label>
+            <label for="groupMembers">MEMBER USER IDs</label>
 
             <textarea
                 id="groupMembers"
-                placeholder="Enter usernames separated by commas"
+                placeholder="Example: 12, 15, 18"
                 rows="3"
             ></textarea>
 
             <small>
-                Search usernames before creating a group.
+                Enter numeric user IDs separated by commas.
+                Your own account is added automatically.
             </small>
 
-            <button type="submit" class="chat-primary-button">
+            <button
+                type="submit"
+                class="chat-primary-button">
                 CREATE GROUP
             </button>
 
@@ -321,14 +342,14 @@
 
 </div>
 
-
-<!-- NEW PRIVATE CHAT MODAL -->
+<!-- PRIVATE CHAT MODAL -->
 
 <div class="chat-modal-overlay" id="privateModal" hidden>
 
     <div class="chat-modal">
 
-        <button class="chat-modal-close"
+        <button
+            class="chat-modal-close"
             data-close-modal="privateModal">
             ×
         </button>
@@ -344,15 +365,23 @@
             autocomplete="off"
         >
 
-        <div id="newChatResults" class="search-results"></div>
+        <div
+            id="newChatResults"
+            class="search-results">
+        </div>
 
     </div>
 
 </div>
 
+<!-- NOTIFICATION -->
 
-<div class="messenger-toast" id="messengerToast"
-    role="status" aria-live="polite"></div>
+<div
+    class="messenger-toast"
+    id="messengerToast"
+    role="status"
+    aria-live="polite">
+</div>
 
 </body>
 </html>
