@@ -14,7 +14,6 @@ let currentUser = null;
 let conversations = [];
 let activeConversation = null;
 let currentFilter = "all";
-let typingTimer = null;
 let searchTimer = null;
 
 const messageCache = new Map();
@@ -41,10 +40,17 @@ async function api(url, options = {}) {
 function notify(message) {
     const element = get("messengerToast");
 
+    if (!element) {
+        console.log(message);
+        return;
+    }
+
     element.textContent = message;
     element.classList.add("show");
 
-    setTimeout(() => element.classList.remove("show"), 2600);
+    setTimeout(() => {
+        element.classList.remove("show");
+    }, 2600);
 }
 
 function escapeHTML(value) {
@@ -58,28 +64,58 @@ function escapeHTML(value) {
 }
 
 function avatarLetter(name) {
-    return (name || "U").charAt(0).toUpperCase();
+    return String(name || "U").charAt(0).toUpperCase();
+}
+
+function sameId(a, b) {
+    return String(a) === String(b);
+}
+
+function normalizeConversation(item) {
+    return {
+        id: item.id,
+        type: item.type,
+        name: item.type === "private"
+            ? (item.other_username || item.name || "Unknown")
+            : (item.name || "Unnamed Group"),
+
+        lastMessage: item.last_message
+            ? {
+                content: item.last_message
+            }
+            : null,
+
+        unreadCount: Number(item.unread_count || 0)
+    };
+}
+
+function normalizeMessage(item) {
+    return {
+        id: item.id,
+        conversationId: item.conversation_id ?? item.conversationId,
+        senderId: item.sender_id ?? item.senderId,
+        senderUsername: item.sender_username ?? item.senderUsername,
+        content: item.content,
+        messageType: item.message_type ?? item.messageType,
+        createdAt: item.created_at ?? item.createdAt
+    };
 }
 
 function setConnectionStatus(status) {
     const element = get("connectionStatus");
 
-    element.classList.remove(
-        "connected",
-        "disconnected"
-    );
+    if (!element) return;
+
+    element.classList.remove("connected", "disconnected");
 
     if (status === "connected") {
         element.classList.add("connected");
-        element.innerHTML =
-            '<span class="status-dot"></span> ONLINE';
+        element.textContent = "ONLINE";
     } else if (status === "disconnected") {
         element.classList.add("disconnected");
-        element.innerHTML =
-            '<span class="status-dot"></span> OFFLINE';
+        element.textContent = "OFFLINE";
     } else {
-        element.innerHTML =
-            '<span class="status-dot"></span> CONNECTING';
+        element.textContent = "CONNECTING";
     }
 }
 
@@ -94,26 +130,34 @@ async function loadCurrentUser() {
         return false;
     }
 
-    get("myChatUsername").textContent =
-        "@" + currentUser.username;
+    const username = get("myChatUsername");
+    const avatar = get("myChatAvatar");
 
-    get("myChatAvatar").textContent =
-        avatarLetter(currentUser.username);
+    if (username) {
+        username.textContent = "@" + currentUser.username;
+    }
+
+    if (avatar) {
+        avatar.textContent = avatarLetter(currentUser.username);
+    }
 
     return true;
 }
 
 // LOAD CONVERSATIONS
 async function loadConversations() {
-    const data = await api("/api/conversations");
+    const data = await api("/api/chat/conversations");
 
-    conversations = data.conversations || [];
+    conversations = (data.conversations || [])
+        .map(normalizeConversation);
 
     renderConversations();
 }
 
 function renderConversations() {
     const container = get("conversationList");
+
+    if (!container) return;
 
     container.replaceChildren();
 
@@ -124,6 +168,7 @@ function renderConversations() {
 
     if (!filtered.length) {
         const empty = document.createElement("p");
+
         empty.className = "conversation-loading";
         empty.textContent = "NO CONVERSATIONS YET";
 
@@ -136,32 +181,40 @@ function renderConversations() {
 
         item.className = "conversation-item";
 
-        if (activeConversation?.id === conversation.id) {
+        if (
+            activeConversation &&
+            sameId(activeConversation.id, conversation.id)
+        ) {
             item.classList.add("active");
         }
 
-        const name = conversation.name || "Unknown";
         const avatar = document.createElement("div");
 
         avatar.className = "chat-avatar";
-        avatar.textContent = avatarLetter(name);
+        avatar.textContent = avatarLetter(conversation.name);
 
         const details = document.createElement("div");
+
         details.className = "conversation-details";
 
         const title = document.createElement("strong");
-        title.textContent = name;
+
+        title.textContent = conversation.name;
 
         const preview = document.createElement("p");
+
         preview.textContent =
-            conversation.lastMessage?.content || "Start a conversation";
+            conversation.lastMessage?.content ||
+            "Start a conversation";
 
         details.append(title, preview);
 
         const meta = document.createElement("div");
+
         meta.className = "conversation-meta";
 
         const type = document.createElement("small");
+
         type.textContent =
             conversation.type === "group" ? "GROUP" : "PRIVATE";
 
@@ -190,45 +243,86 @@ function renderConversations() {
 async function openConversation(conversation) {
     activeConversation = conversation;
 
-    get("emptyChat").hidden = true;
-    get("activeChat").hidden = false;
+    if (get("emptyChat")) {
+        get("emptyChat").hidden = true;
+    }
 
-    get("activeChatName").textContent = conversation.name;
-    get("activeChatAvatar").textContent =
-        avatarLetter(conversation.name);
+    if (get("activeChat")) {
+        get("activeChat").hidden = false;
+    }
 
-    get("activeChatStatus").textContent =
-        conversation.type === "group" ? "GROUP CONVERSATION" : "PRIVATE CHAT";
+    if (get("activeChatName")) {
+        get("activeChatName").textContent = conversation.name;
+    }
 
-    if (window.innerWidth <= 650) {
+    if (get("activeChatAvatar")) {
+        get("activeChatAvatar").textContent =
+            avatarLetter(conversation.name);
+    }
+
+    if (get("activeChatStatus")) {
+        get("activeChatStatus").textContent =
+            conversation.type === "group"
+                ? "GROUP CONVERSATION"
+                : "PRIVATE CHAT";
+    }
+
+    if (
+        window.innerWidth <= 650 &&
+        get("chatSidebar")
+    ) {
         get("chatSidebar").classList.add("mobile-hidden");
     }
 
     renderConversations();
 
-    get("messageContainer").replaceChildren();
+    const container = get("messageContainer");
 
-    const loading = document.createElement("p");
-    loading.className = "message-loading";
-    loading.textContent = "LOADING MESSAGES...";
+    if (container) {
+        container.replaceChildren();
 
-    get("messageContainer").append(loading);
+        const loading = document.createElement("p");
+
+        loading.className = "message-loading";
+        loading.textContent = "LOADING MESSAGES...";
+
+        container.append(loading);
+    }
 
     try {
         const data = await api(
-            `/api/conversations/${encodeURIComponent(conversation.id)}/messages`
+            `/api/chat/${encodeURIComponent(conversation.id)}/messages`
         );
 
-        if (activeConversation?.id !== conversation.id) return;
+        if (
+            !activeConversation ||
+            !sameId(activeConversation.id, conversation.id)
+        ) {
+            return;
+        }
 
-        messageCache.set(conversation.id, data.messages || []);
+        const messages = (data.messages || [])
+            .map(normalizeMessage);
 
-        renderMessages(data.messages || []);
+        messageCache.set(String(conversation.id), messages);
+
+        renderMessages(messages);
 
         if (socket.connected) {
-            socket.emit("conversation:join", {
+            socket.emit("chat:join", {
+                conversationId: conversation.id
+            }, response => {
+                if (response && !response.success) {
+                    notify(response.error || "Unable to join chat.");
+                }
+            });
+
+            socket.emit("chat:read", {
                 conversationId: conversation.id
             });
+
+            conversation.unreadCount = 0;
+            renderConversations();
         }
 
     } catch (error) {
@@ -240,11 +334,15 @@ async function openConversation(conversation) {
 function renderMessages(messages) {
     const container = get("messageContainer");
 
+    if (!container) return;
+
     container.replaceChildren();
 
     messages.forEach(message => {
-        const own =
-            String(message.senderId) === String(currentUser.id);
+        const own = sameId(
+            message.senderId,
+            currentUser.id
+        );
 
         const row = document.createElement("div");
 
@@ -252,12 +350,15 @@ function renderMessages(messages) {
             (own ? " own-message" : "");
 
         const bubble = document.createElement("div");
+
         bubble.className = "message-bubble";
 
         const content = document.createElement("div");
+
         content.textContent = message.content || "";
 
         const meta = document.createElement("small");
+
         meta.className = "message-meta";
 
         const sender = own
@@ -283,134 +384,144 @@ function renderMessages(messages) {
 }
 
 // SEND MESSAGE
-get("messageForm").addEventListener("submit", event => {
-    event.preventDefault();
+const messageForm = get("messageForm");
 
-    if (!activeConversation) {
-        notify("Select a conversation first.");
-        return;
-    }
+if (messageForm) {
+    messageForm.addEventListener("submit", event => {
+        event.preventDefault();
 
-    const input = get("messageInput");
-    const content = input.value.trim();
-
-    if (!content) return;
-
-    if (!socket.connected) {
-        notify("Messenger is disconnected.");
-        return;
-    }
-
-    socket.emit("message:send", {
-        conversationId: activeConversation.id,
-        content
-    }, response => {
-        if (response?.error) {
-            notify(response.error);
+        if (!activeConversation) {
+            notify("Select a conversation first.");
             return;
         }
 
-        input.value = "";
-        input.style.height = "auto";
-    });
-});
+        const input = get("messageInput");
 
-// NEW MESSAGE
-socket.on("message:new", message => {
-    const conversation = conversations.find(
-        item => item.id === message.conversationId
-    );
+        if (!input) return;
 
-    if (conversation) {
-        conversation.lastMessage = message;
+        const content = input.value.trim();
 
-        if (
-            activeConversation?.id === conversation.id
-        ) {
-            const messages =
-                messageCache.get(conversation.id) || [];
+        if (!content) return;
 
-            messages.push(message);
-
-            messageCache.set(conversation.id, messages);
-            renderMessages(messages);
-        } else if (
-            String(message.senderId) !== String(currentUser.id)
-        ) {
-            conversation.unreadCount =
-                (conversation.unreadCount || 0) + 1;
+        if (!socket.connected) {
+            notify("Messenger is disconnected.");
+            return;
         }
 
-        renderConversations();
-    }
-});
+        socket.emit("chat:send", {
+            conversationId: activeConversation.id,
+            content
+        }, response => {
+            if (!response?.success) {
+                notify(response?.error || "Message sending failed.");
+                return;
+            }
 
-// TYPING
-get("messageInput").addEventListener("input", () => {
-    if (!activeConversation || !socket.connected) return;
-
-    socket.emit("typing:start", {
-        conversationId: activeConversation.id
-    });
-
-    clearTimeout(typingTimer);
-
-    typingTimer = setTimeout(() => {
-        socket.emit("typing:stop", {
-            conversationId: activeConversation.id
+            input.value = "";
+            input.style.height = "auto";
         });
-    }, 1200);
-});
+    });
+}
 
-socket.on("typing:update", data => {
+// RECEIVE NEW MESSAGE
+socket.on("chat:new", rawMessage => {
+    const message = normalizeMessage(rawMessage);
+
+    const conversation = conversations.find(item =>
+        sameId(item.id, message.conversationId)
+    );
+
+    if (!conversation) {
+        loadConversations().catch(error => {
+            notify(error.message);
+        });
+
+        return;
+    }
+
+    conversation.lastMessage = {
+        content: message.content
+    };
+
     if (
-        activeConversation?.id !== data.conversationId ||
-        String(data.userId) === String(currentUser.id)
-    ) return;
+        activeConversation &&
+        sameId(activeConversation.id, conversation.id)
+    ) {
+        const messages =
+            messageCache.get(String(conversation.id)) || [];
 
-    get("typingIndicator").hidden = !data.isTyping;
+        const alreadyExists = messages.some(item =>
+            sameId(item.id, message.id)
+        );
 
-    get("typingIndicator").textContent =
-        data.isTyping
-            ? `${data.username || "Someone"} is typing...`
-            : "";
+        if (!alreadyExists) {
+            messages.push(message);
+
+            messageCache.set(
+                String(conversation.id),
+                messages
+            );
+
+            renderMessages(messages);
+        }
+
+        if (!sameId(message.senderId, currentUser.id)) {
+            socket.emit("chat:read", {
+                conversationId: conversation.id
+            });
+        }
+
+    } else if (
+        !sameId(message.senderId, currentUser.id)
+    ) {
+        conversation.unreadCount =
+            (conversation.unreadCount || 0) + 1;
+    }
+
+    renderConversations();
 });
 
 // FILTERS
-document.querySelectorAll("[data-chat-filter]").forEach(button => {
-    button.addEventListener("click", () => {
-        currentFilter = button.dataset.chatFilter;
+document.querySelectorAll("[data-chat-filter]")
+    .forEach(button => {
+        button.addEventListener("click", () => {
+            currentFilter = button.dataset.chatFilter;
 
-        document.querySelectorAll("[data-chat-filter]")
-            .forEach(item => item.classList.remove("active"));
+            document.querySelectorAll("[data-chat-filter]")
+                .forEach(item => item.classList.remove("active"));
 
-        button.classList.add("active");
+            button.classList.add("active");
 
-        renderConversations();
+            renderConversations();
+        });
     });
-});
 
 // SEARCH USERS
 async function searchUsers(query, target) {
+    if (!target) return;
+
     target.replaceChildren();
 
-    if (query.length < 2) return;
+    if (query.length < 3) return;
 
     try {
         const data = await api(
-            `/api/users/search?q=${encodeURIComponent(query)}`
+            `/api/chat/users?q=${encodeURIComponent(query)}`
         );
 
         (data.users || []).forEach(user => {
-            if (String(user.id) === String(currentUser.id)) return;
+            if (sameId(user.id, currentUser.id)) return;
 
             const row = document.createElement("div");
+
             row.className = "search-result-item";
 
             const name = document.createElement("strong");
+
             name.textContent = "@" + user.username;
 
             const button = document.createElement("button");
+
             button.textContent = "MESSAGE";
 
             button.addEventListener("click", () => {
@@ -426,32 +537,41 @@ async function searchUsers(query, target) {
     }
 }
 
-get("userSearch").addEventListener("input", event => {
-    clearTimeout(searchTimer);
+// SEARCH INPUTS
+const userSearch = get("userSearch");
 
-    searchTimer = setTimeout(() => {
-        searchUsers(
-            event.target.value.trim(),
-            get("searchResults")
-        );
-    }, 350);
-});
+if (userSearch) {
+    userSearch.addEventListener("input", event => {
+        clearTimeout(searchTimer);
 
-get("newChatSearch").addEventListener("input", event => {
-    clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            searchUsers(
+                event.target.value.trim(),
+                get("searchResults")
+            );
+        }, 350);
+    });
+}
 
-    searchTimer = setTimeout(() => {
-        searchUsers(
-            event.target.value.trim(),
-            get("newChatResults")
-        );
-    }, 350);
-});
+const newChatSearch = get("newChatSearch");
+
+if (newChatSearch) {
+    newChatSearch.addEventListener("input", event => {
+        clearTimeout(searchTimer);
+
+        searchTimer = setTimeout(() => {
+            searchUsers(
+                event.target.value.trim(),
+                get("newChatResults")
+            );
+        }, 350);
+    });
+}
 
 // START PRIVATE CHAT
 async function startPrivateChat(userId) {
     try {
-        const data = await api("/api/conversations/private", {
+        const data = await api("/api/chat/private", {
             method: "POST",
             body: JSON.stringify({ userId })
         });
@@ -460,12 +580,14 @@ async function startPrivateChat(userId) {
 
         await loadConversations();
 
-        const conversation = conversations.find(
-            item => item.id === data.conversation.id
+        const conversation = conversations.find(item =>
+            sameId(item.id, data.conversationId)
         );
 
         if (conversation) {
             await openConversation(conversation);
+        } else {
+            notify("Chat created, but conversation could not be loaded.");
         }
 
     } catch (error) {
@@ -475,99 +597,165 @@ async function startPrivateChat(userId) {
 
 // MODALS
 function openModal(id) {
-    get(id).hidden = false;
+    const element = get(id);
+
+    if (element) {
+        element.hidden = false;
+    }
 }
 
 function closeModal(id) {
-    get(id).hidden = true;
+    const element = get(id);
+
+    if (element) {
+        element.hidden = true;
+    }
 }
 
-get("newChatButton").addEventListener("click", () => {
-    openModal("privateModal");
-});
+const newChatButton = get("newChatButton");
 
-get("emptyNewChat").addEventListener("click", () => {
-    openModal("privateModal");
-});
-
-document.querySelectorAll("[data-close-modal]").forEach(button => {
-    button.addEventListener("click", () => {
-        closeModal(button.dataset.closeModal);
+if (newChatButton) {
+    newChatButton.addEventListener("click", () => {
+        openModal("privateModal");
     });
-});
+}
+
+const emptyNewChat = get("emptyNewChat");
+
+if (emptyNewChat) {
+    emptyNewChat.addEventListener("click", () => {
+        openModal("privateModal");
+    });
+}
+
+document.querySelectorAll("[data-close-modal]")
+    .forEach(button => {
+        button.addEventListener("click", () => {
+            closeModal(button.dataset.closeModal);
+        });
+    });
 
 // GROUP CREATION
-get("createGroupForm").addEventListener("submit", async event => {
-    event.preventDefault();
+const createGroupForm = get("createGroupForm");
 
-    const name = get("groupName").value.trim();
+if (createGroupForm) {
+    createGroupForm.addEventListener("submit", async event => {
+        event.preventDefault();
 
-    const members = get("groupMembers").value
-        .split(",")
-        .map(value => value.trim())
-        .filter(Boolean);
+        const name = get("groupName")?.value.trim() || "";
 
-    try {
-        const data = await api("/api/conversations/group", {
-            method: "POST",
-            body: JSON.stringify({ name, members })
-        });
+        const memberIds = (get("groupMembers")?.value || "")
+            .split(",")
+            .map(value => value.trim())
+            .filter(Boolean)
+            .map(Number);
 
-        get("groupFeedback").textContent =
-            "Group created successfully!";
+        const feedback = get("groupFeedback");
 
-        await loadConversations();
+        if (
+            memberIds.some(id =>
+                !Number.isSafeInteger(id) || id <= 0
+            )
+        ) {
+            if (feedback) {
+                feedback.textContent =
+                    "Enter valid numeric user IDs separated by commas.";
+            }
 
-        closeModal("groupModal");
+            return;
+        }
 
-        const group = conversations.find(
-            item => item.id === data.conversation.id
-        );
+        try {
+            const data = await api("/api/chat/groups", {
+                method: "POST",
+                body: JSON.stringify({
+                    name,
+                    memberIds
+                })
+            });
 
-        if (group) await openConversation(group);
+            if (feedback) {
+                feedback.textContent =
+                    "Group created successfully!";
+            }
 
-    } catch (error) {
-        get("groupFeedback").textContent = error.message;
-    }
-});
+            await loadConversations();
 
-// GROUP BUTTON
-get("chatInfoButton").addEventListener("click", () => {
-    if (!activeConversation) return;
+            closeModal("groupModal");
 
-    const panel = get("chatInfoPanel");
+            const group = conversations.find(item =>
+                sameId(item.id, data.conversationId)
+            );
 
-    panel.classList.toggle("mobile-open");
+            if (group) {
+                await openConversation(group);
+            }
 
-    const content = get("chatInfoContent");
+        } catch (error) {
+            if (feedback) {
+                feedback.textContent = error.message;
+            } else {
+                notify(error.message);
+            }
+        }
+    });
+}
 
-    content.replaceChildren();
+// CHAT INFO PANEL
+const chatInfoButton = get("chatInfoButton");
 
-    const title = document.createElement("h3");
-    title.textContent = activeConversation.name;
+if (chatInfoButton) {
+    chatInfoButton.addEventListener("click", () => {
+        if (!activeConversation) return;
 
-    const type = document.createElement("p");
-    type.textContent =
-        activeConversation.type === "group"
-            ? "GROUP CONVERSATION"
-            : "PRIVATE CONVERSATION";
+        const panel = get("chatInfoPanel");
+        const content = get("chatInfoContent");
 
-    content.append(title, type);
-});
+        if (!panel || !content) return;
 
-get("closeInfoPanel").addEventListener("click", () => {
-    get("chatInfoPanel").classList.remove("mobile-open");
-});
+        panel.classList.toggle("mobile-open");
 
-// SOCKET EVENTS
+        content.replaceChildren();
+
+        const title = document.createElement("h3");
+
+        title.textContent = activeConversation.name;
+
+        const type = document.createElement("p");
+
+        type.textContent =
+            activeConversation.type === "group"
+                ? "GROUP CONVERSATION"
+                : "PRIVATE CONVERSATION";
+
+        content.append(title, type);
+    });
+}
+
+const closeInfoPanel = get("closeInfoPanel");
+
+if (closeInfoPanel) {
+    closeInfoPanel.addEventListener("click", () => {
+        get("chatInfoPanel")?.classList.remove("mobile-open");
+    });
+}
+
+// SOCKET CONNECTION
 socket.on("connect", () => {
     setConnectionStatus("connected");
 
-    if (activeConversation) {
-        socket.emit("conversation:join", {
-            conversationId: activeConversation.id
-        });
-    }
+    socket.emit("chat:sync", response => {
+        if (!response?.success) {
+            notify(response?.error || "Chat synchronization failed.");
+            return;
+        }
+
+        if (activeConversation) {
+            socket.emit("chat:join", {
+                conversationId: activeConversation.id
+            });
+        }
+    });
 });
 
 socket.on("disconnect", () => {
@@ -576,13 +764,6 @@ socket.on("disconnect", () => {
 
 socket.on("connect_error", () => {
     setConnectionStatus("disconnected");
-});
-
-socket.on("conversation:updated", loadConversations);
-
-socket.on("presence:update", () => {
-    // Online presence updates will be displayed
-    // when the backend sends user presence information.
 });
 
 // INITIALIZE
