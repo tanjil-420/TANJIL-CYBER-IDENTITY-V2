@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b14">
+
+    <title>Dashboard | TANJIL.EXE</title>
+
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body class="dashboard-body">
+
+<div class="background-grid"></div>
+
+<aside class="sidebar" id="sidebar">
+
+    <a href="/" class="logo">TANJIL<span>.EXE</span></a>
+
+    <div class="sidebar-user">
+        <div class="avatar" id="userAvatar">T</div>
+
+        <div>
+            <strong id="sidebarUsername">Loading...</strong>
+            <small>PERSONAL ACCOUNT</small>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <span class="nav-label">WORKSPACE</span>
+
+        <a href="/dashboard.html" class="side-link active">
+            <span>◈</span> Dashboard
+        </a>
+
+        <a href="/profile.html" class="side-link">
+            <span>👤</span> My Profile
+        </a>
+
+        <a href="/messenger.html" class="side-link">
+            <span>💬</span> Messenger
+            <span class="nav-count" id="messageBadge">0</span>
+        </a>
+
+        <span class="nav-label">PERSONALIZATION</span>
+
+        <a href="#qr-section" class="side-link">
+            <span>▦</span> My QR Code
+        </a>
+
+        <a href="#account-section" class="side-link">
+            <span>⚙</span> Account
+        </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <a href="/" class="side-link">
+            <span>↗</span> Visit Website
+        </a>
+
+        <button class="side-link logout-button" id="logoutButton">
+            <span>⇥</span> Logout
+        </button>
+
+    </div>
+
+</aside>
+
+
+<main class="dashboard-main">
+
+    <header class="dashboard-header">
+
+        <button id="sidebarToggle" class="sidebar-toggle"
+            aria-label="Toggle sidebar">
+            ☰
+        </button>
+
+        <div>
+            <div class="header-title">CONTROL CENTER</div>
+            <small id="currentDate">PERSONAL DASHBOARD</small>
+        </div>
+
+        <div class="header-actions">
+
+            <a href="/messenger.html" class="header-icon"
+                aria-label="Messenger">
+                💬
+            </a>
+
+            <button class="header-icon" id="refreshDashboard"
+                aria-label="Refresh dashboard">
+                ↻
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <div class="dashboard-content">
+
+        <section class="welcome-panel">
+
+            <div>
+                <span class="dashboard-eyebrow">
+                    SYSTEM / USER INTERFACE
+                </span>
+
+                <h1>
+                    Welcome back,
+                    <span id="welcomeUsername">User</span>
+                </h1>
+
+                <p>Your digital universe is ready.</p>
+            </div>
+
+            <div class="welcome-status">
+                <span class="status-dot"></span>
+                ACCOUNT ACTIVE
+            </div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+
+        <section class="dashboard-stats">
+
+            <article class="stat-card">
+                <span>◈</span>
+                <small>ACCOUNT STATUS</small>
+                <strong id="accountStatus">Loading...</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>▦</span>
+                <small>PORTFOLIO</small>
+                <strong id="portfolioStatus">Loading...</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>💬</span>
+                <small>UNREAD MESSAGES</small>
+                <strong id="unreadMessages">0</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>✦</span>
+                <small>ACCOUNT ROLE</small>
+                <strong id="accountRole">USER</strong>
+            </article>
+
+        </section>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <section class="dashboard-section">
+
+            <div class="dashboard-section-title">
+                <h2>QUICK ACCESS</h2>
+                <span>// 01</span>
+            </div>
+
+            <div class="quick-grid">
+
+                <a href="/profile.html" class="quick-card">
+                    <span>👤</span>
+                    <strong>EDIT PROFILE</strong>
+                    <small>Manage your identity</small>
+                </a>
+
+                <a href="/messenger.html" class="quick-card">
+                    <span>💬</span>
+                    <strong>OPEN MESSENGER</strong>
+                    <small>Inbox and group chats</small>
+                </a>
+
+                <a href="#qr-section" class="quick-card">
+                    <span>▦</span>
+                    <strong>PERSONAL QR</strong>
+                    <small>Share your portfolio</small>
+                </a>
+
+                <a href="#account-section" class="quick-card">
+                    <span>⚙</span>
+                    <strong>SETTINGS</strong>
+                    <small>Account preferences</small>
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROFILE PREVIEW -->
+
+        <section class="dashboard-section">
+
+            <div class="dashboard-section-title">
+                <h2>MY IDENTITY</h2>
+                <span>// 02</span>
+            </div>
+
+            <div class="identity-panel">
+
+                <div class="identity-avatar" id="profileAvatar">
+                    T
+                </div>
+
+                <div class="identity-details">
+
+                    <h2 id="profileDisplayName">Loading...</h2>
+
+                    <p id="profileUsername">@username</p>
+
+                    <p id="profileBio">
+                        Your personal digital identity.
+                    </p>
+
+                    <a href="/profile.html" class="small-action">
+                        EDIT IDENTITY →
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- QR CODE -->
+
+        <section class="dashboard-section" id="qr-section">
+
+            <div class="dashboard-section-title">
+                <h2>MY DIGITAL QR</h2>
+                <span>// 03</span>
+            </div>
+
+            <div class="qr-panel">
+
+                <div class="qr-preview">
+                    <div class="qr-loading" id="qrLoading">
+                        QR CODE LOADING...
+                    </div>
+
+                    <img
+                        src=""
+                        id="myQrImage"
+                        alt="Personal QR Code"
+                        hidden
+                    >
+                </div>
+
+                <div class="qr-information">
+
+                    <h3>YOUR DIGITAL IDENTITY</h3>
+
+                    <p>
+                        Share your personal QR code to let others
+                        access your portfolio.
+                    </p>
+
+                    <a href="#" id="publicProfileLink"
+                        target="_blank" rel="noopener">
+                        OPEN PUBLIC PROFILE ↗
+                    </a>
+
+                    <div class="qr-actions">
+
+                        <button class="dashboard-button"
+                            id="downloadQr">
+                            DOWNLOAD QR
+                        </button>
+
+                        <button class="dashboard-button secondary"
+                            id="copyProfileLink">
+                            COPY PROFILE LINK
+                        </button>
+
+                    </div>
+
+                    <p class="dashboard-feedback"
+                        id="qrFeedback" aria-live="polite"></p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ACCOUNT -->
+
+        <section class="dashboard-section" id="account-section">
+
+            <div class="dashboard-section-title">
+                <h2>ACCOUNT INFORMATION</h2>
+                <span>// 04</span>
+            </div>
+
+            <div class="account-panel">
+
+                <div class="account-row">
+                    <span>USERNAME</span>
+                    <strong id="accountUsername">Loading...</strong>
+                </div>
+
+                <div class="account-row">
+                    <span>EMAIL</span>
+                    <strong id="accountEmail">Loading...</strong>
+                </div>
+
+                <div class="account-row">
+                    <span>ACCOUNT ROLE</span>
+                    <strong id="accountRoleDetail">USER</strong>
+                </div>
+
+                <div class="account-row">
+                    <span>MEMBER SINCE</span>
+                    <strong id="accountCreated">Loading...</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <footer class="dashboard-footer">
+            TANJIL.EXE · USER CONTROL CENTER · 2026
+        </footer>
+
+    </div>
+
+</main>
+
+
+<div id="dashboardToast" class="dashboard-toast"
+    role="status" aria-live="polite"></div>
+
+<script src="/js/dashboard.js" defer></script>
+
+</body>
+</html>
