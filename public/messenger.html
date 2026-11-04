@@ -1,0 +1,358 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b14">
+
+    <title>Messenger | TANJIL.EXE</title>
+
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/css/messenger.css">
+
+    <script src="/socket.io/socket.io.js" defer></script>
+    <script src="/js/messenger.js" defer></script>
+</head>
+
+<body class="messenger-body">
+
+<div class="background-grid"></div>
+
+<header class="messenger-topbar">
+
+    <a href="/dashboard.html" class="messenger-logo">
+        TANJIL<span>.EXE</span>
+    </a>
+
+    <div class="messenger-top-title">
+        PRIVATE COMMUNICATION NETWORK
+    </div>
+
+    <div class="messenger-top-actions">
+
+        <span class="connection-status" id="connectionStatus">
+            <span class="status-dot"></span>
+            CONNECTING
+        </span>
+
+        <a href="/dashboard.html" class="back-dashboard">
+            DASHBOARD ↗
+        </a>
+
+    </div>
+
+</header>
+
+
+<main class="messenger-layout">
+
+    <!-- LEFT SIDEBAR -->
+
+    <aside class="chat-sidebar">
+
+        <div class="chat-sidebar-heading">
+
+            <div>
+                <h2>MESSAGES</h2>
+                <small>YOUR CONNECTIONS</small>
+            </div>
+
+            <button id="newChatButton" class="new-chat-button"
+                aria-label="Start a new conversation">
+                +
+            </button>
+
+        </div>
+
+
+        <!-- SEARCH -->
+
+        <div class="chat-search">
+
+            <input
+                type="search"
+                id="userSearch"
+                placeholder="Search username..."
+                autocomplete="off"
+            >
+
+            <div id="searchResults" class="search-results"></div>
+
+        </div>
+
+
+        <!-- TABS -->
+
+        <div class="chat-tabs">
+
+            <button class="chat-tab active" data-chat-filter="all">
+                ALL
+            </button>
+
+            <button class="chat-tab" data-chat-filter="private">
+                INBOX
+            </button>
+
+            <button class="chat-tab" data-chat-filter="group">
+                GROUPS
+            </button>
+
+        </div>
+
+
+        <!-- CONVERSATIONS -->
+
+        <div class="conversation-list" id="conversationList">
+
+            <div class="conversation-loading">
+                LOADING CONVERSATIONS...
+            </div>
+
+        </div>
+
+
+        <div class="chat-sidebar-footer">
+
+            <div class="chat-current-user">
+
+                <div class="chat-avatar" id="myChatAvatar">
+                    T
+                </div>
+
+                <div>
+                    <strong id="myChatUsername">Loading...</strong>
+                    <small>MY ACCOUNT</small>
+                </div>
+
+            </div>
+
+            <a href="/dashboard.html" title="Dashboard">⌂</a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- CHAT AREA -->
+
+    <section class="chat-main" id="chatMain">
+
+        <div class="chat-empty-state" id="emptyChat">
+
+            <div class="empty-chat-icon">◈</div>
+
+            <h2>YOUR DIGITAL CONNECTIONS</h2>
+
+            <p>
+                Select a conversation or start a new chat
+                to connect with someone.
+            </p>
+
+            <button class="chat-primary-button"
+                id="emptyNewChat">
+                START CONVERSATION
+            </button>
+
+        </div>
+
+
+        <!-- ACTIVE CHAT -->
+
+        <div class="active-chat" id="activeChat" hidden>
+
+            <header class="active-chat-header">
+
+                <div class="active-user-info">
+
+                    <div class="chat-avatar" id="activeChatAvatar">
+                        U
+                    </div>
+
+                    <div>
+                        <h3 id="activeChatName">Username</h3>
+                        <small id="activeChatStatus">
+                            CONVERSATION
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="active-chat-actions">
+
+                    <button id="chatInfoButton"
+                        title="Conversation information">
+                        ⓘ
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- MESSAGES -->
+
+            <div class="message-container" id="messageContainer"
+                aria-live="polite">
+
+                <div class="message-loading">
+                    SELECT A CONVERSATION
+                </div>
+
+            </div>
+
+
+            <!-- TYPING STATUS -->
+
+            <div class="typing-indicator" id="typingIndicator"
+                hidden>
+                Someone is typing...
+            </div>
+
+
+            <!-- MESSAGE COMPOSER -->
+
+            <form class="message-composer" id="messageForm">
+
+                <button type="button" id="emojiButton"
+                    title="Emoji">
+                    ☺
+                </button>
+
+                <textarea
+                    id="messageInput"
+                    placeholder="Write a message..."
+                    rows="1"
+                    maxlength="4000"
+                    required
+                ></textarea>
+
+                <button type="submit" id="sendMessageButton"
+                    title="Send message">
+                    ➤
+                </button>
+
+            </form>
+
+            <div class="composer-footer">
+                ENTER TO SEND · SHIFT + ENTER FOR NEW LINE
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RIGHT INFORMATION PANEL -->
+
+    <aside class="chat-info-panel" id="chatInfoPanel">
+
+        <div class="info-panel-heading">
+            <h3>DETAILS</h3>
+
+            <button id="closeInfoPanel"
+                aria-label="Close details">
+                ×
+            </button>
+        </div>
+
+        <div class="chat-info-content" id="chatInfoContent">
+
+            <div class="info-placeholder">
+                <span>◈</span>
+                <p>Conversation information will appear here.</p>
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+
+
+<!-- NEW GROUP MODAL -->
+
+<div class="chat-modal-overlay" id="groupModal" hidden>
+
+    <div class="chat-modal">
+
+        <button class="chat-modal-close"
+            data-close-modal="groupModal">
+            ×
+        </button>
+
+        <h2>CREATE NEW GROUP</h2>
+
+        <p>Build your own private community.</p>
+
+        <form id="createGroupForm">
+
+            <label for="groupName">GROUP NAME</label>
+
+            <input
+                type="text"
+                id="groupName"
+                maxlength="80"
+                placeholder="Enter group name"
+                required
+            >
+
+            <label for="groupMembers">MEMBER USERNAMES</label>
+
+            <textarea
+                id="groupMembers"
+                placeholder="Enter usernames separated by commas"
+                rows="3"
+            ></textarea>
+
+            <small>
+                Search usernames before creating a group.
+            </small>
+
+            <button type="submit" class="chat-primary-button">
+                CREATE GROUP
+            </button>
+
+        </form>
+
+        <p id="groupFeedback" role="status"></p>
+
+    </div>
+
+</div>
+
+
+<!-- NEW PRIVATE CHAT MODAL -->
+
+<div class="chat-modal-overlay" id="privateModal" hidden>
+
+    <div class="chat-modal">
+
+        <button class="chat-modal-close"
+            data-close-modal="privateModal">
+            ×
+        </button>
+
+        <h2>START NEW CHAT</h2>
+
+        <p>Find a member by username.</p>
+
+        <input
+            type="search"
+            id="newChatSearch"
+            placeholder="Search username..."
+            autocomplete="off"
+        >
+
+        <div id="newChatResults" class="search-results"></div>
+
+    </div>
+
+</div>
+
+
+<div class="messenger-toast" id="messengerToast"
+    role="status" aria-live="polite"></div>
+
+</body>
+</html>
