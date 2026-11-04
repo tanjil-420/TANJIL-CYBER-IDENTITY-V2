@@ -10,7 +10,23 @@ const pgSession = require("connect-pg-simple")(session);
 const rateLimit = require("express-rate-limit");
 const { Server } = require("socket.io");
 
+// ENVIRONMENT VALIDATION
+if (!process.env.SESSION_SECRET?.trim()) {
+    throw new Error(
+        "SESSION_SECRET is missing. Please configure it in your .env file or Render Environment."
+    );
+}
+
+if (!process.env.DATABASE_URL?.trim()) {
+    throw new Error(
+        "DATABASE_URL is missing. Please configure your PostgreSQL connection URL."
+    );
+}
+
+// DATABASE
 const { pool } = require("./config/database");
+
+// ROUTES AND SOCKETS
 const { attachChatSocket } = require("./sockets/chatSocket");
 
 const authRoutes = require("./routes/auth");
@@ -19,19 +35,12 @@ const qrRoutes = require("./routes/qr");
 const adminRoutes = require("./routes/admin");
 const chatRoutes = require("./routes/chat");
 
+// APP SETUP
 const app = express();
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === "production";
-
-if (!process.env.SESSION_SECRET) {
-    throw new Error(">>");
-}
-
-if (!process.env.DATABASE_URL) {
-    throw new Error("sqlite");
-}
 
 if (isProduction) {
     app.set("trust proxy", 1);
@@ -39,33 +48,43 @@ if (isProduction) {
 
 app.disable("x-powered-by");
 
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://cdn.socket.io"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "ws:", "wss:"],
-            objectSrc: ["'none'"],
-            frameAncestors: ["'none'"]
+// HELMET SECURITY
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "https://cdn.socket.io"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "ws:", "wss:"],
+                objectSrc: ["'none'"],
+                frameAncestors: ["'none'"]
+            }
         }
-    }
-}));
+    })
+);
 
+// BODY PARSERS
 app.use(express.json({ limit: "100kb" }));
-app.use(express.urlencoded({
-    extended: false,
-    limit: "100kb"
-}));
 
-// DATABASE SESSION STORAGE
-app.use(session({
-    store: new pgSession({
-        pool,
-        tableName: "user_sessions",
-        createTableIfMissing: true
-    }),
+app.use(
+    express.urlencoded({
+        extended: false,
+        limit: "100kb"
+    })
+);
+
+// DATABASE SESSION STORE
+const sessionStore = new pgSession({
+    pool,
+    tableName: "user_sessions",
+    createTableIfMissing: true
+});
+
+// SHARED SESSION MIDDLEWARE
+const sessionMiddleware = session({
+    store: sessionStore,
 
     name: "tanjil.sid",
 
@@ -80,36 +99,19 @@ app.use(session({
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000
     }
-}));
+});
+
+// EXPRESS SESSION
+app.use(sessionMiddleware);
 
 // SOCKET.IO
 const io = new Server(server, {
-    cors: {
-        origin: false
-    },
     maxHttpBufferSize: 1e6,
     transports: ["websocket", "polling"]
 });
 
-io.engine.use(
-    session({
-        store: new pgSession({
-            pool,
-            tableName: "user_sessions",
-            createTableIfMissing: true
-        }),
-        name: "tanjil.sid",
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        }
-    })
-);
+// SHARE EXPRESS SESSION WITH SOCKET.IO
+io.engine.use(sessionMiddleware);
 
 attachChatSocket(io);
 
@@ -144,7 +146,10 @@ app.get("/api/health", async (req, res) => {
             messenger: "enabled",
             timestamp: new Date().toISOString()
         });
+
     } catch (error) {
+        console.error("HEALTH CHECK FAILED:", error.message);
+
         res.status(503).json({
             status: "offline",
             database: "disconnected"
@@ -153,22 +158,21 @@ app.get("/api/health", async (req, res) => {
 });
 
 // FRONTEND
-app.use(express.static(
-    path.join(__dirname, "public"),
-    {
+app.use(
+    express.static(path.join(__dirname, "public"), {
         index: "index.html",
         maxAge: isProduction ? "1h" : 0
-    }
-));
+    })
+);
 
-// CUSTOM NOT FOUND
+// API NOT FOUND
 app.use("/api", (req, res) => {
     res.status(404).json({
         error: "API endpoint not found."
     });
 });
 
-// ERROR HANDLER
+// GLOBAL ERROR HANDLER
 app.use((error, req, res, next) => {
     console.error("SERVER ERROR:", error);
 
@@ -202,16 +206,25 @@ async function startServer() {
     }
 }
 
-startServer();
+// GRACEFUL SHUTDOWN
+async function shutdown(signal) {
+    console.log(`${signal} received. Shutting down server...`);
 
-async function shutdown() {
-    console.log("Shutting down server...");
+    io.close(async () => {
+        try {
+            await pool.end();
+            console.log("Database connection closed.");
+            process.exit(0);
 
-    server.close(async () => {
-        await pool.end();
-        process.exit(0);
+        } catch (error) {
+            console.error("SHUTDOWN ERROR:", error.message);
+            process.exit(1);
+        }
     });
 }
 
-process.on("SIGTERM", shutdown);
-process.on("SIGINT", shutdown);
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+// RUN
+startServer();
