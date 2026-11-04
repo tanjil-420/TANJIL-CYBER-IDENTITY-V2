@@ -177,6 +177,7 @@ router.get("/public/:username", async (req, res, next) => {
         const result = await pool.query(
             `SELECT
                 u.username,
+                u.email,
                 p.display_name,
                 p.bio,
                 p.age,
