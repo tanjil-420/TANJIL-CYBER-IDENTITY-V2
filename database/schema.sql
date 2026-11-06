@@ -80,3 +80,37 @@ CREATE TABLE IF NOT EXISTS site_visitors (
 );
 
 CREATE INDEX IF NOT EXISTS idx_site_visitors_last_seen ON site_visitors(last_seen DESC);
+
+-- V2.3 Messenger reply support
+ALTER TABLE messages
+    ADD COLUMN IF NOT EXISTS reply_to_id BIGINT REFERENCES messages(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_reply_to ON messages(reply_to_id);
+
+-- V2.3 Seven-day skill assessment event
+CREATE TABLE IF NOT EXISTS skill_test_enrollments (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    skill_name VARCHAR(80) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed')),
+    rank_title VARCHAR(40),
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS skill_test_tasks (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    enrollment_id BIGINT NOT NULL REFERENCES skill_test_enrollments(id) ON DELETE CASCADE,
+    day_number SMALLINT NOT NULL CHECK (day_number BETWEEN 1 AND 7),
+    task_data JSONB NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'locked' CHECK (status IN ('locked', 'available', 'submitted', 'approved', 'revision')),
+    available_at TIMESTAMPTZ NOT NULL,
+    submission_text VARCHAR(2500),
+    submission_url TEXT,
+    reviewer_note VARCHAR(800),
+    submitted_at TIMESTAMPTZ,
+    reviewed_at TIMESTAMPTZ,
+    UNIQUE (enrollment_id, day_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_skill_test_tasks_status ON skill_test_tasks(status, submitted_at);
+CREATE INDEX IF NOT EXISTS idx_skill_test_enrollments_user ON skill_test_enrollments(user_id);

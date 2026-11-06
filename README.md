@@ -38,3 +38,24 @@ Set the environment variables in the Render Web Service's Environment settings. 
 - `/api/dashboard`: authenticated dashboard data
 - `/api/chat`: private and group messaging
 - `/api/health`: database and schema health
+
+
+## Platform-owner setup
+Set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). Remove `ADMIN_PASSWORD` after the successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters; the one-time admin bootstrap accepts 5 characters for an existing account.
+
+
+## V2.3 — Seven-Day Skill Test + Messenger upgrades
+
+- The 7-Day Skill Test creates seven skill-based tasks for each member. A new task unlocks every 24 hours. Members submit a project description and optional HTTPS link.
+- Owner review supports approval or revision requests. Seven approved tasks award the non-privileged **SKILL GRADUATE** achievement.
+- Web Development has a seven-project track, including a responsive portfolio, validated form, task manager, data dashboard, theme system, multi-page site and capstone. Dedicated tracks are included for Web Development, Video Editing, Graphic Design, Digital Marketing, Digital Art, Software & Automation, Photography, Gaming, Music & Audio, UI/UX Design, 3D & Animation and Content Creation; other skills receive a general skill-showcase track.
+- Messenger now supports hover/tap reply actions, quoted replies, conversation avatars, and a chat-info panel that displays a public ID only when the member profile is public.
+- Admin/Owner/Controller/Operator privileges are never awarded by event completion; privileged roles remain under the Platform Owner control.
+
+### Render deployment
+
+Upload the project files to the GitHub repository and deploy. The startup migration in database/schema.sql creates the Skill Test tables and message reply field automatically. Check /api/health after deployment; V2.3 expects the skill_test_enrollments and skill_test_tasks tables as well.
+
+### Owner account bootstrap
+
+For an existing registered owner account, set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it. The previous requested five-character owner password is accepted by the bootstrap, but it is weak and should be replaced with a strong secret after first login. Normal registration still requires at least six characters.

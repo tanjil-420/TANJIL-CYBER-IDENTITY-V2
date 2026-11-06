@@ -105,9 +105,25 @@
                 </div>
 
                 <div class="profile-field full-field">
-                    <label for="skills">SKILLS (one per line or comma separated)</label>
-                    <textarea id="skills" name="skills" maxlength="1200" rows="3" placeholder="Video Editing&#10;Graphic Design&#10;Gaming"></textarea>
-                    <small>Up to 30 skills. These appear on your signed-in homepage profile.</small>
+                    <label>SELECT YOUR SKILLS</label>
+                    <div class="skill-picker" id="skillPicker">
+                        <label><input type="checkbox" value="Video Editing"> <span>🎬 Video Editing</span></label>
+                        <label><input type="checkbox" value="Graphic Design"> <span>🎨 Graphic Design</span></label>
+                        <label><input type="checkbox" value="Web Development"> <span>💻 Web Development</span></label>
+                        <label><input type="checkbox" value="Digital Art"> <span>🖌️ Digital Art</span></label>
+                        <label><input type="checkbox" value="Gaming"> <span>🎮 Gaming</span></label>
+                        <label><input type="checkbox" value="Music & Audio"> <span>🎧 Music & Audio</span></label>
+                        <label><input type="checkbox" value="Digital Marketing"> <span>📈 Digital Marketing</span></label>
+                        <label><input type="checkbox" value="Software & Automation"> <span>⚙️ Software & Automation</span></label>
+                        <label><input type="checkbox" value="Photography"> <span>📷 Photography</span></label>
+                        <label><input type="checkbox" value="Content Creation"> <span>✍️ Content Creation</span></label>
+                        <label><input type="checkbox" value="UI/UX Design"> <span>🧩 UI/UX Design</span></label>
+                        <label><input type="checkbox" value="3D & Animation"> <span>🌌 3D & Animation</span></label>
+                    </div>
+                    <label for="customSkills" class="custom-skill-label">ADD OTHER SKILLS</label>
+                    <input id="customSkills" type="text" maxlength="300" placeholder="Example: SEO, Blender, Python (comma separated)">
+                    <textarea id="skills" name="skills" hidden></textarea>
+                    <small>Select up to 30 skills. They appear on your member profile.</small>
                 </div>
 
                 <div class="profile-field full-field">
@@ -136,16 +152,12 @@
                     >
                 </div>
 
-                <div class="profile-field">
-                    <label for="avatarUrl">AVATAR IMAGE URL</label>
-
-                    <input
-                        id="avatarUrl"
-                        name="avatarUrl"
-                        type="url"
-                        maxlength="500"
-                        placeholder="https://example.com/image.jpg"
-                    >
+                <div class="profile-field full-field">
+                    <label for="avatarFile">PROFILE PHOTO</label>
+                    <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp">
+                    <small>Choose a JPG, PNG or WebP image. It will be resized before saving (max 400 KB).</small>
+                    <label for="avatarUrl">OR USE AN IMAGE URL</label>
+                    <input id="avatarUrl" name="avatarUrl" type="url" maxlength="500" placeholder="https://example.com/image.jpg">
                 </div>
 
             </div>

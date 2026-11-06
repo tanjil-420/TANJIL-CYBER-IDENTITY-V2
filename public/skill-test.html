@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b14">
+  <title>7-Day Skill Test | TANJIL.EXE</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/css/skill-test.css">
+</head>
+<body class="skill-test-body">
+  <div class="background-grid"></div>
+  <header class="exam-topbar">
+    <a class="logo" href="/">TANJIL<span>.EXE</span></a>
+    <nav><a href="/dashboard.html">DASHBOARD</a><a href="/profile.html">MY PROFILE</a><a href="/messenger.html">MESSENGER</a></nav>
+  </header>
+  <main class="exam-shell">
+    <section class="exam-hero">
+      <div class="exam-eyebrow">✦ COMMUNITY EVENT / SEASON 01</div>
+      <h1>7-DAY <span>SKILL TEST</span></h1>
+      <p>Prove what you can make. Every task is based on a skill in your profile. Build something, submit your work and get it reviewed.</p>
+      <div class="exam-facts"><span>7 DAILY TASKS</span><span>24H TASK UNLOCK</span><span>OWNER REVIEW</span><span>MERIT-BASED RANK</span></div>
+    </section>
+
+    <section class="exam-rules-grid">
+      <article><b>01</b><h3>Choose your track</h3><p>Pick one skill already saved in your profile. Your seven tasks follow that skill.</p></article>
+      <article><b>02</b><h3>Build & submit</h3><p>Each task unlocks every 24 hours. Submit a project link, evidence or a clear explanation.</p></article>
+      <article><b>03</b><h3>Get reviewed</h3><p>The platform Owner checks your work. A task can be approved or returned for improvement.</p></article>
+      <article><b>04</b><h3>Earn your rank</h3><p>Get all seven tasks approved to earn the permanent Skill Graduate achievement.</p></article>
+    </section>
+
+    <section class="exam-start-panel" id="startPanel" hidden>
+      <div><span class="panel-kicker">READY WHEN YOU ARE</span><h2>Choose your skill track</h2><p>Only skills from your saved profile appear here. You can update them in Edit Profile before joining.</p></div>
+      <label for="skillTrackSelect">YOUR SKILL</label>
+      <select id="skillTrackSelect"></select>
+      <button class="exam-primary-button" id="startExamButton" type="button">START 7-DAY EVENT →</button>
+      <p class="exam-message" id="startMessage" aria-live="polite"></p>
+    </section>
+
+    <section class="exam-progress-panel" id="progressPanel" hidden>
+      <div class="progress-heading"><div><span class="panel-kicker">YOUR EVENT PROGRESS</span><h2 id="progressTitle">SKILL TRACK</h2><p id="progressSubtitle"></p></div><div class="rank-stamp" id="currentRank">MEMBER</div></div>
+      <div class="progress-track"><span id="progressFill"></span></div>
+      <div class="progress-stats"><strong><span id="approvedCount">0</span> / 7 APPROVED</strong><span id="eventStatus">IN PROGRESS</span></div>
+      <div id="taskList" class="exam-task-list"></div>
+    </section>
+
+    <section class="rank-panel">
+      <div class="panel-kicker">THE MERIT LADDER</div>
+      <h2>Earn respect through work.</h2>
+      <p>These titles show contribution and trust. Completing the event grants the Skill Graduate achievement—not administrator access.</p>
+      <div class="rank-grid" id="rankGrid"></div>
+      <div class="rank-security-note">Admin, Controller, Operator and moderation permissions are assigned separately by the Platform Owner. Event completion never grants private system access automatically.</div>
+    </section>
+
+    <section class="admin-review-panel" id="adminReviewPanel" hidden>
+      <div class="panel-kicker">OWNER CONSOLE</div><h2>Submission review queue</h2><p>Review members’ work and approve it or request a revision.</p>
+      <div id="reviewQueue" class="review-queue"><p class="exam-muted">Loading submissions...</p></div>
+    </section>
+  </main>
+  <div class="exam-toast" id="examToast" role="status" aria-live="polite"></div>
+  <script src="/js/skill-test.js" defer></script>
+</body>
+</html>

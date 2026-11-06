@@ -12,7 +12,7 @@ function attachChatSocket(io) {
             }
 
             const result = await pool.query(
-                `SELECT id, username, is_active
+                `SELECT id, username, is_active, role
                  FROM users
                  WHERE id = $1`,
                 [session.userId]
@@ -116,20 +116,16 @@ function attachChatSocket(io) {
         socket.on("chat:send", async (data, callback) => {
             try {
                 const conversationId = Number(data?.conversationId);
-                const content = typeof data?.content === "string"
-                    ? data.content.trim()
-                    : "";
+                const content = typeof data?.content === "string" ? data.content.trim() : "";
+                const replyToId = data?.replyToId == null ? null : Number(data.replyToId);
 
                 if (!Number.isSafeInteger(conversationId) ||
                     conversationId <= 0) {
                     throw new Error("Invalid conversation.");
                 }
 
-                if (!content || content.length > 4000) {
-                    throw new Error(
-                        "Message must contain 1 to 4000 characters."
-                    );
-                }
+                if (!content || content.length > 4000) throw new Error("Message must contain 1 to 4000 characters.");
+                if (replyToId !== null && (!Number.isSafeInteger(replyToId) || replyToId <= 0)) throw new Error("Invalid reply target.");
 
                 const membership = await pool.query(
                     `SELECT 1
@@ -143,22 +139,28 @@ function attachChatSocket(io) {
                     throw new Error("You are not a conversation member.");
                 }
 
-                const result = await pool.query(
-                    `INSERT INTO messages (
-                        conversation_id,
-                        sender_id,
-                        content
-                    )
-                    VALUES ($1, $2, $3)
-                    RETURNING id, conversation_id, sender_id,
-                    content, message_type, created_at`,
-                    [conversationId, userId, content]
-                );
+                if (replyToId !== null) {
+                    const parent = await pool.query("SELECT id FROM messages WHERE id = $1 AND conversation_id = $2", [replyToId, conversationId]);
+                    if (!parent.rows.length) throw new Error("The message you are replying to is unavailable.");
+                }
 
-                const message = {
-                    ...result.rows[0],
-                    sender_username: socket.user.username
-                };
+                const inserted = await pool.query(
+                    `INSERT INTO messages (conversation_id, sender_id, content, reply_to_id)
+                     VALUES ($1, $2, $3, $4)
+                     RETURNING id`,
+                    [conversationId, userId, content, replyToId]
+                );
+                const messageResult = await pool.query(
+                    `SELECT m.id, m.conversation_id, m.sender_id, m.reply_to_id, m.content, m.message_type, m.created_at,
+                            u.username AS sender_username, u.role AS sender_role, p.avatar_url AS sender_avatar_url,
+                            r.content AS reply_content, ru.username AS reply_sender_username
+                     FROM messages m LEFT JOIN users u ON u.id = m.sender_id
+                     LEFT JOIN profiles p ON p.user_id = u.id
+                     LEFT JOIN messages r ON r.id = m.reply_to_id
+                     LEFT JOIN users ru ON ru.id = r.sender_id
+                     WHERE m.id = $1`, [inserted.rows[0].id]
+                );
+                const message = messageResult.rows[0];
 
                 io.to(`conversation:${conversationId}`).emit(
                     "chat:new",

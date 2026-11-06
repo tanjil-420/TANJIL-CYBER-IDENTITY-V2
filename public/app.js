@@ -119,7 +119,20 @@ function renderLoggedIn(user, profile) {
     $("memberEducation").textContent = profile.education || "Education not added";
     $("memberLocation").textContent = profile.location || "Location not added";
     $("memberRole").textContent = String(user.role || "user").toUpperCase();
-    $("memberAvatar").textContent = displayName.charAt(0).toUpperCase();
+    if (profile.avatarUrl) {
+        const avatarImage = document.createElement("img");
+        avatarImage.src = profile.avatarUrl;
+        avatarImage.alt = `${displayName} profile photo`;
+        $("memberAvatar").replaceChildren(avatarImage);
+    } else {
+        $("memberAvatar").textContent = displayName.charAt(0).toUpperCase();
+    }
+    if (user.role === "admin") {
+        const premium = document.createElement("span");
+        premium.className = "premium-tag";
+        premium.textContent = "✦ PLATFORM OWNER · PREMIUM";
+        $("memberMeta")?.append(premium);
+    }
     $("heroTitle").innerHTML = `WELCOME BACK,<br><span>${escapeHtml(displayName.toUpperCase())}.</span>`;
     $("heroUsername").textContent = `@${user.username} · YOUR PERSONAL SPACE`;
     $("heroEyebrow").textContent = "YOUR DIGITAL IDENTITY IS ACTIVE";
@@ -233,5 +246,11 @@ registerForm.addEventListener("submit", async event => {
     }
 });
 
+const themeToggle = $("themeToggle");
+if (localStorage.getItem("tanjil-theme") === "light") document.body.classList.add("light-theme");
+themeToggle?.addEventListener("click", () => {
+    document.body.classList.toggle("light-theme");
+    localStorage.setItem("tanjil-theme", document.body.classList.contains("light-theme") ? "light" : "dark");
+});
 loadStats();
 checkAuthentication();

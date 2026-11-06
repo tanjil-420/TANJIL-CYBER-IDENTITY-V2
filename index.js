@@ -20,6 +20,7 @@ const adminRoutes = require("./routes/admin");
 const chatRoutes = require("./routes/chat");
 const siteRoutes = require("./routes/site");
 const dashboardRoutes = require("./routes/dashboard");
+const skillTestRoutes = require("./routes/skill-test");
 
 const app = express();
 const server = http.createServer(app);
@@ -52,7 +53,7 @@ app.use(helmet({
     }
 }));
 
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({ limit: "600kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 
 const sessionStore = new pgSession({
@@ -101,6 +102,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/site", siteRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/skill-test", skillTestRoutes);
 
 app.get("/api/health", async (req, res) => {
     try {
@@ -113,7 +115,10 @@ app.get("/api/health", async (req, res) => {
                 to_regclass('public.conversation_members') IS NOT NULL AS conversation_members,
                 to_regclass('public.messages') IS NOT NULL AS messages,
                 to_regclass('public.user_sessions') IS NOT NULL AS user_sessions,
-                to_regclass('public.site_visitors') IS NOT NULL AS site_visitors
+                to_regclass('public.site_visitors') IS NOT NULL AS site_visitors,
+                to_regclass('public.skill_test_enrollments') IS NOT NULL AS skill_test_enrollments,
+                to_regclass('public.skill_test_tasks') IS NOT NULL AS skill_test_tasks,
+                EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'reply_to_id') AS message_replies
         `);
         const tables = result.rows[0];
         const missingTables = Object.entries(tables).filter(([, exists]) => !exists).map(([name]) => name);
@@ -122,7 +127,7 @@ app.get("/api/health", async (req, res) => {
         res.status(schemaReady ? 200 : 503).json({
             status: schemaReady ? "online" : "incomplete",
             project: "TANJIL CYBER IDENTITY",
-            version: "2.1.0",
+            version: "2.3.0",
             database: "connected",
             schema: schemaReady ? "ready" : "incomplete",
             tables,
@@ -158,14 +163,53 @@ async function initializeDatabase() {
     console.log("Database schema initialized and verified.");
 }
 
+async function bootstrapAdmin() {
+    const username = String(process.env.ADMIN_USERNAME || "").trim().toLowerCase();
+    const password = String(process.env.ADMIN_PASSWORD || "");
+    if (!username) return;
+    if (!/^[a-z0-9]+(?:[._][a-z0-9]+)*$/.test(username)) {
+        throw new Error("ADMIN_USERNAME contains invalid characters.");
+    }
+    const existing = await pool.query("SELECT id FROM users WHERE username = $1", [username]);
+    if (!existing.rows.length) {
+        const email = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            throw new Error("Admin account not found. Set ADMIN_EMAIL once to create it, or register this username first.");
+        }
+        if (password.length < 5 || password.length > 72) {
+            throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+        }
+        const bcrypt = require("bcryptjs");
+        const hash = await bcrypt.hash(password, 12);
+        const created = await pool.query(
+            "INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, 'admin') RETURNING id",
+            [username, email, hash]
+        );
+        await pool.query("INSERT INTO profiles (user_id, display_name) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING", [created.rows[0].id, username]);
+        console.log(`Admin account created: @${username}`);
+        return;
+    }
+    if (password) {
+        if (password.length < 5 || password.length > 72) throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+        const bcrypt = require("bcryptjs");
+        const hash = await bcrypt.hash(password, 12);
+        await pool.query("UPDATE users SET role = 'admin', password_hash = $1, updated_at = NOW() WHERE username = $2", [hash, username]);
+        console.log(`Admin account promoted and password initialized: @${username}`);
+    } else {
+        await pool.query("UPDATE users SET role = 'admin', updated_at = NOW() WHERE username = $1", [username]);
+        console.log(`Admin role verified: @${username}`);
+    }
+}
+
 async function startServer() {
     try {
         await pool.query("SELECT 1");
         await initializeDatabase();
+        await bootstrapAdmin();
 
         server.listen(PORT, "0.0.0.0", () => {
             console.log("--------------------------------");
-            console.log(" TANJIL CYBER IDENTITY V2.1");
+            console.log(" TANJIL CYBER IDENTITY V2.3");
             console.log("--------------------------------");
             console.log(`Server: http://localhost:${PORT}`);
             console.log("Database: Connected");

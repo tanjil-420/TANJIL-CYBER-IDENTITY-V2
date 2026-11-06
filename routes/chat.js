@@ -19,13 +19,10 @@ router.get("/users", async (req, res, next) => {
         }
 
         const result = await pool.query(
-            `SELECT id, username
-             FROM users
-             WHERE username LIKE $1
-             AND id != $2
-             AND is_active = TRUE
-             ORDER BY username
-             LIMIT 20`,
+            `SELECT u.id, u.username, p.avatar_url
+             FROM users u LEFT JOIN profiles p ON p.user_id = u.id
+             WHERE u.username LIKE $1 AND u.id != $2 AND u.is_active = TRUE
+             ORDER BY u.username LIMIT 20`,
             [`%${query}%`, req.user.id]
         );
 
@@ -299,14 +296,11 @@ router.get("/conversations", async (req, res, next) => {
                 c.type,
                 c.name,
                 c.created_at,
-                (
-                    SELECT u.username
-                    FROM conversation_members other_member
-                    JOIN users u ON u.id = other_member.user_id
-                    WHERE other_member.conversation_id = c.id
-                    AND other_member.user_id != $1
-                    LIMIT 1
-                ) AS other_username,
+                (SELECT u.id FROM conversation_members other_member JOIN users u ON u.id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_user_id,
+                (SELECT u.username FROM conversation_members other_member JOIN users u ON u.id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_username,
+                (SELECT p.avatar_url FROM conversation_members other_member JOIN profiles p ON p.user_id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_avatar_url,
+                (SELECT p.is_public FROM conversation_members other_member JOIN profiles p ON p.user_id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_profile_public,
+                (SELECT u.role FROM conversation_members other_member JOIN users u ON u.id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_role,
                 (
                     SELECT m.content
                     FROM messages m
@@ -339,6 +333,27 @@ router.get("/conversations", async (req, res, next) => {
     }
 });
 
+// CHAT INFO / PUBLIC ID
+router.get("/:id/info", async (req, res, next) => {
+    try {
+        const conversationId = Number(req.params.id);
+        if (!Number.isSafeInteger(conversationId) || conversationId <= 0) return res.status(400).json({ error: "Invalid conversation." });
+        const membership = await pool.query("SELECT 1 FROM conversation_members WHERE conversation_id = $1 AND user_id = $2", [conversationId, req.user.id]);
+        if (!membership.rows.length) return res.status(403).json({ error: "Conversation access denied." });
+        const conversation = await pool.query("SELECT id, type, name FROM conversations WHERE id = $1", [conversationId]);
+        if (!conversation.rows.length) return res.status(404).json({ error: "Conversation not found." });
+        const members = await pool.query(`SELECT u.username, p.display_name, p.avatar_url, p.is_public, p.bio, p.skills
+             FROM conversation_members cm JOIN users u ON u.id = cm.user_id
+             LEFT JOIN profiles p ON p.user_id = u.id
+             WHERE cm.conversation_id = $1 AND u.id <> $2 ORDER BY u.username`, [conversationId, req.user.id]);
+        const profiles = members.rows.map(row => ({ username: row.username, displayName: row.display_name || row.username, avatarUrl: row.avatar_url || "",
+            isPublic: row.is_public === true, publicId: row.is_public === true ? "@" + row.username : null,
+            bio: row.is_public === true ? (row.bio || "") : "", skills: row.is_public === true && Array.isArray(row.skills) ? row.skills : [],
+            profileUrl: row.is_public === true ? "/public-profile.html?username=" + encodeURIComponent(row.username) : null }));
+        res.json({ success: true, conversation: conversation.rows[0], members: profiles });
+    } catch (error) { next(error); }
+});
+
 // MESSAGE HISTORY
 router.get("/:id/messages", async (req, res, next) => {
     try {
@@ -369,15 +384,18 @@ router.get("/:id/messages", async (req, res, next) => {
         }
 
         const result = await pool.query(
-            `SELECT m.id, m.conversation_id, m.sender_id,
+            `SELECT m.id, m.conversation_id, m.sender_id, m.reply_to_id,
                     m.content, m.message_type, m.created_at,
-                    u.username AS sender_username
+                    u.username AS sender_username, u.role AS sender_role, p.avatar_url AS sender_avatar_url,
+                    r.content AS reply_content, ru.username AS reply_sender_username
              FROM messages m
              LEFT JOIN users u ON u.id = m.sender_id
+             LEFT JOIN profiles p ON p.user_id = u.id
+             LEFT JOIN messages r ON r.id = m.reply_to_id
+             LEFT JOIN users ru ON ru.id = r.sender_id
              WHERE m.conversation_id = $1
              AND ($2::bigint IS NULL OR m.id < $2)
-             ORDER BY m.id DESC
-             LIMIT 50`,
+             ORDER BY m.id DESC LIMIT 50`,
             [conversationId, beforeId]
         );
 

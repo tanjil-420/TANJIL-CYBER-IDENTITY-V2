@@ -28,3 +28,5 @@ FEATURES
 - Public profile and QR code
 - Private/group Messenger with Socket.IO
 - Admin API
+
+V2.3: 7-Day Skill Test event, Owner submission review, achievement ranks, Messenger replies, circular profile avatars and public/private profile ID info. Run the updated schema on startup by deploying the included files.

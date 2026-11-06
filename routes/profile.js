@@ -80,7 +80,16 @@ async function updateMyProfile(req, res, next) {
         const age = clean(req.body.age, 20);
         const phone = clean(req.body.phone, 30);
         const website = validHttpsUrl(clean(req.body.website, 500), "website");
-        const avatarUrl = validHttpsUrl(clean(req.body.avatarUrl, 1000), "avatar");
+        const rawAvatar = clean(req.body.avatarUrl, 600000);
+        let avatarUrl = "";
+        if (rawAvatar.startsWith("data:image/")) {
+            if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(rawAvatar) || rawAvatar.length > 550000) {
+                throw new Error("Profile image must be JPG, PNG or WebP and smaller than 400 KB.");
+            }
+            avatarUrl = rawAvatar;
+        } else {
+            avatarUrl = validHttpsUrl(rawAvatar, "avatar");
+        }
         const socialsInput = req.body.socials || req.body.links || {};
         const links = { website };
         for (const key of socialKeys) {

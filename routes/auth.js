@@ -37,8 +37,8 @@ router.post("/register", async (req, res, next) => {
     if (!validEmail(email) || email.length > 255) {
         return res.status(400).json({ error: "Enter a valid email address." });
     }
-    if (password.length < 10 || password.length > 72) {
-        return res.status(400).json({ error: "Password must contain 10-72 characters." });
+    if (password.length < 6 || password.length > 72) {
+        return res.status(400).json({ error: "Password must contain at least 6 characters (maximum 72)." });
     }
 
     let client;
@@ -160,7 +160,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
         const result = await pool.query(
             `SELECT u.id, u.username, u.email, u.role, u.created_at,
                     p.display_name, p.bio, p.education, p.location,
-                    p.status, p.skills, p.is_public
+                    p.status, p.skills, p.avatar_url, p.is_public
              FROM users u
              LEFT JOIN profiles p ON p.user_id = u.id
              WHERE u.id = $1`,
@@ -189,6 +189,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
                 location: row.location,
                 status: row.status,
                 skills: row.skills || [],
+                avatarUrl: row.avatar_url || "",
                 isPublic: row.is_public
             }
         });

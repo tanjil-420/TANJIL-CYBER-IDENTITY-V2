@@ -46,7 +46,7 @@ function safeImageUrl(value) {
     try {
         const url = new URL(value);
 
-        if (!["http:", "https:"].includes(url.protocol)) {
+        if (!["http:", "https:"].includes(url.protocol) && !/^data:image\/(jpeg|png|webp);base64,/.test(value)) {
             return "";
         }
 
@@ -92,6 +92,11 @@ function updatePreview() {
 }
 
 profileForm.addEventListener("input", updatePreview);
+document.getElementById("skillPicker").addEventListener("change", () => {
+    const count = collectSkills().length;
+    if (count > 30) feedback("You can select up to 30 skills.", true);
+    else feedback(`${count} skills selected.`);
+});
 
 // LOAD PROFILE
 async function loadProfile() {
@@ -129,6 +134,12 @@ async function loadProfile() {
         Object.entries(fields).forEach(([id, value]) => {
             setValue(id, value);
         });
+        const selectedSkills = new Set(Array.isArray(profile.skills) ? profile.skills : []);
+        document.querySelectorAll("#skillPicker input[type=checkbox]").forEach(input => {
+            input.checked = selectedSkills.has(input.value);
+        });
+        const knownSkills = new Set([...document.querySelectorAll("#skillPicker input")].map(input => input.value));
+        $("customSkills").value = (Array.isArray(profile.skills) ? profile.skills : []).filter(skill => !knownSkills.has(skill)).join(", ");
 
         $("isPublic").checked = profile.isPublic !== false;
 
@@ -164,12 +175,57 @@ function validateOptionalUrl(id) {
         throw new Error(`${id.toUpperCase()}: Invalid URL.`);
     }
 
+    if (id === "avatarUrl" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value) && value.length <= 550000) {
+        return value;
+    }
     if (!["http:", "https:"].includes(url.protocol)) {
-        throw new Error("Only HTTP and HTTPS links are allowed.");
+        throw new Error("Only HTTPS links are allowed.");
     }
 
     return url.href;
 }
+
+function collectSkills() {
+    const selected = [...document.querySelectorAll("#skillPicker input:checked")].map(input => input.value);
+    const custom = $("customSkills").value.split(",").map(value => value.trim()).filter(Boolean);
+    const skills = [...new Set([...selected, ...custom])].slice(0, 30);
+    $("skills").value = skills.join("\n");
+    return skills;
+}
+
+async function compressAvatar(file) {
+    if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG or WebP image.");
+    if (file.size > 8 * 1024 * 1024) throw new Error("Please choose an image smaller than 8 MB.");
+    const image = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 640 / Math.max(image.width, image.height));
+    canvas.width = Math.round(image.width * scale);
+    canvas.height = Math.round(image.height * scale);
+    canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+    image.close();
+    let quality = 0.82;
+    let dataUrl = canvas.toDataURL("image/jpeg", quality);
+    while (dataUrl.length > 520000 && quality > 0.42) {
+        quality -= 0.08;
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+    }
+    if (dataUrl.length > 520000) throw new Error("Image could not be compressed enough. Try a smaller photo.");
+    return dataUrl;
+}
+
+$("avatarFile").addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+        const dataUrl = await compressAvatar(file);
+        $("avatarUrl").value = dataUrl;
+        updatePreview();
+        feedback("Photo ready. Click SAVE CHANGES to upload it.");
+    } catch (error) {
+        feedback(error.message, true);
+        event.target.value = "";
+    }
+});
 
 // SAVE PROFILE
 profileForm.addEventListener("submit", async event => {
@@ -189,7 +245,7 @@ profileForm.addEventListener("submit", async event => {
             displayName: $("displayName").value.trim(),
             location: $("location").value.trim(),
             bio: $("bio").value.trim(),
-            skills: $("skills").value.split(/[\n,]/).map(value => value.trim()).filter(Boolean),
+            skills: collectSkills(),
             website: validateOptionalUrl("website"),
             avatarUrl: validateOptionalUrl("avatarUrl"),
 

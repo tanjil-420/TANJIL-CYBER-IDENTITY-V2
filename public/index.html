@@ -33,11 +33,12 @@
         <a href="/#memberArea" data-auth-only hidden>My identity <span>02</span></a>
         <a href="/#skills">Skills & categories <span>03</span></a>
         <a href="/guides.html">Learning guides <span>04</span></a>
-        <a href="/#platform">Platform features <span>05</span></a>
-        <a href="/messenger.html" data-auth-only hidden>Messenger <span>06</span></a>
-        <a href="/profile.html" data-auth-only hidden>Edit profile <span>07</span></a>
-        <a href="/dashboard.html" data-auth-only hidden>Dashboard <span>08</span></a>
-        <a href="/#social">Social links <span>09</span></a>
+        <a href="/skill-test.html">7-Day Skill Test <span>05</span></a>
+        <a href="/#platform">Platform features <span>06</span></a>
+        <a href="/messenger.html" data-auth-only hidden>Messenger <span>07</span></a>
+        <a href="/profile.html" data-auth-only hidden>Edit profile <span>08</span></a>
+        <a href="/dashboard.html" data-auth-only hidden>Dashboard <span>09</span></a>
+        <a href="/#social">Social links <span>10</span></a>
     </nav>
     <div class="menu-account" id="menuAccount">
         <button class="nav-login" data-open-auth="login">LOGIN</button>
@@ -77,7 +78,7 @@
                 <h2 id="memberDisplayName">Member</h2>
                 <p class="member-handle" id="memberUsername">@username</p>
                 <p id="memberBio" class="member-bio">Add a short introduction to your profile.</p>
-                <div class="member-meta"><span id="memberEducation">Education not added</span><span id="memberLocation">Location not added</span><span id="memberRole">USER</span></div>
+                <div class="member-meta" id="memberMeta"><span id="memberEducation">Education not added</span><span id="memberLocation">Location not added</span><span id="memberRole">USER</span></div>
                 <div class="skill-chips" id="memberSkills"><span class="empty-chip">Add your skills from Edit Profile</span></div>
                 <div class="member-actions"><a class="btn-primary" href="/profile.html">EDIT MY PROFILE</a><a class="btn-secondary" href="/dashboard.html">DASHBOARD</a></div>
             </div>
@@ -106,6 +107,7 @@
             <article class="feature-card"><span>▦</span><h3>PERSONAL QR</h3><p>Share a QR code that opens your public profile.</p></article>
             <article class="feature-card"><span>⌁</span><h3>MESSENGER</h3><p>Connect through private and group conversations.</p></article>
             <article class="feature-card"><span>✧</span><h3>PROFILE THEMES</h3><p>Personalize your digital identity with a visual style.</p></article>
+            <a class="feature-card" href="/skill-test.html"><span>⚑</span><h3>7-DAY SKILL TEST</h3><p>Complete seven practical skill challenges, submit your work and earn a community achievement.</p></a>
         </div>
     </section>
 
@@ -124,6 +126,7 @@
     <section class="cta-section"><div class="eyebrow">YOUR DIGITAL IDENTITY STARTS HERE</div><h2>BUILD YOUR OWN SPACE.</h2><p>Create a profile, add your skills and connect with the community.</p><button class="btn-primary" data-open-auth="register">JOIN THE PLATFORM →</button></section>
 </main>
 
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">☼</button>
 <footer class="footer"><a href="/" class="logo">TANJIL<span>.EXE</span></a><p>© 2026 TANJIL CYBER IDENTITY</p><small>DESIGNED IN NEON · POWERED BY TECHNOLOGY</small></footer>
 
 <div class="modal-overlay" id="authModal" hidden>
@@ -132,7 +135,7 @@
         <div class="auth-logo">TANJIL<span>.EXE</span></div>
         <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">LOGIN</button><button class="auth-tab" data-auth-tab="register">REGISTER</button></div>
         <form id="loginForm" class="auth-form"><h2 id="authTitle">WELCOME BACK</h2><label for="loginIdentity">USERNAME OR EMAIL</label><input id="loginIdentity" type="text" name="identity" placeholder="Enter username or email" autocomplete="username" required><label for="loginPassword">PASSWORD</label><input id="loginPassword" type="password" name="password" placeholder="Enter password" autocomplete="current-password" required><button type="submit" class="btn-primary">LOGIN TO ACCOUNT</button></form>
-        <form id="registerForm" class="auth-form" hidden><h2>CREATE YOUR IDENTITY</h2><label for="registerUsername">USERNAME</label><input id="registerUsername" type="text" name="username" minlength="3" maxlength="30" placeholder="Choose username" autocomplete="username" required><label for="registerEmail">EMAIL ADDRESS</label><input id="registerEmail" type="email" name="email" maxlength="255" placeholder="Enter email" autocomplete="email" required><label for="registerPassword">PASSWORD</label><input id="registerPassword" type="password" name="password" minlength="10" maxlength="72" placeholder="Minimum 10 characters" autocomplete="new-password" required><button type="submit" class="btn-primary">CREATE MY ACCOUNT</button></form>
+        <form id="registerForm" class="auth-form" hidden><h2>CREATE YOUR IDENTITY</h2><label for="registerUsername">USERNAME</label><input id="registerUsername" type="text" name="username" minlength="3" maxlength="30" placeholder="Choose username" autocomplete="username" required><label for="registerEmail">EMAIL ADDRESS</label><input id="registerEmail" type="email" name="email" maxlength="255" placeholder="Enter email" autocomplete="email" required><label for="registerPassword">PASSWORD</label><input id="registerPassword" type="password" name="password" minlength="6" maxlength="72" placeholder="Minimum 6 characters" autocomplete="new-password" required><button type="submit" class="btn-primary">CREATE MY ACCOUNT</button></form>
         <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
         <div class="auth-footer">SECURE DIGITAL IDENTITY SYSTEM</div>
     </div>

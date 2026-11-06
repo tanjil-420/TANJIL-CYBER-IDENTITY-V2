@@ -51,12 +51,13 @@
         <header class="active-chat-header">
           <div class="active-user-info">
             <button id="mobileBackButton" class="mobile-back-button" type="button" aria-label="Back to conversations">‹</button>
-            <div><h3 id="activeChatName">Conversation</h3><small id="activeChatSubtitle">MESSAGES</small></div>
+            <div class="chat-avatar active-chat-avatar" id="activeChatAvatar">U</div><div><h3 id="activeChatName">Conversation</h3><small id="activeChatSubtitle">MESSAGES</small></div>
           </div>
           <div class="active-chat-actions"><button id="chatInfoButton" type="button" title="Chat info">ⓘ</button></div>
         </header>
         <div class="message-container" id="messageContainer"><div class="message-loading">Select a conversation</div></div>
         <div class="typing-indicator" id="typingIndicator" hidden></div>
+        <div class="reply-composer-preview" id="replyComposerPreview" hidden></div>
         <form class="message-composer" id="messageForm">
           <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Write a message..." aria-label="Message"></textarea>
           <button id="sendMessageButton" type="submit" title="Send message">➤</button>
