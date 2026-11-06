@@ -127,7 +127,7 @@ app.get("/api/health", async (req, res) => {
         res.status(schemaReady ? 200 : 503).json({
             status: schemaReady ? "online" : "incomplete",
             project: "TANJIL CYBER IDENTITY",
-            version: "2.3.0",
+            version: "2.4.0",
             database: "connected",
             schema: schemaReady ? "ready" : "incomplete",
             tables,
@@ -209,7 +209,7 @@ async function startServer() {
 
         server.listen(PORT, "0.0.0.0", () => {
             console.log("--------------------------------");
-            console.log(" TANJIL CYBER IDENTITY V2.3");
+            console.log(" TANJIL CYBER IDENTITY V2.4");
             console.log("--------------------------------");
             console.log(`Server: http://localhost:${PORT}`);
             console.log("Database: Connected");

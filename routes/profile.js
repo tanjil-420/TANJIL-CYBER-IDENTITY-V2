@@ -84,7 +84,7 @@ async function updateMyProfile(req, res, next) {
         let avatarUrl = "";
         if (rawAvatar.startsWith("data:image/")) {
             if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(rawAvatar) || rawAvatar.length > 550000) {
-                throw new Error("Profile image must be JPG, PNG or WebP and smaller than 400 KB.");
+                throw new Error("Profile image must be JPG, PNG or WebP and smaller than 550 KB.");
             }
             avatarUrl = rawAvatar;
         } else {

@@ -18,13 +18,13 @@
 
 <header class="profile-topbar">
 
-    <a href="/dashboard.html" class="logo">
-        TANJIL<span>.EXE</span>
-    </a>
-
-    <a href="/dashboard.html" class="back-dashboard">
-        ← BACK TO DASHBOARD
-    </a>
+    <a href="/" class="logo">TANJIL<span>.EXE</span></a>
+    <nav class="profile-page-nav" aria-label="Main navigation">
+        <a href="/">HOME</a>
+        <a href="/dashboard.html">DASHBOARD</a>
+        <a href="/messenger.html">MESSENGER</a>
+        <a href="/skill-test.html">7-DAY EVENT</a>
+    </nav>
 
 </header>
 
@@ -155,9 +155,28 @@
                 <div class="profile-field full-field">
                     <label for="avatarFile">PROFILE PHOTO</label>
                     <input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp">
-                    <small>Choose a JPG, PNG or WebP image. It will be resized before saving (max 400 KB).</small>
+                    <small>Choose any JPG, PNG or WebP photo (up to 8 MB). Adjust the crop before saving.</small>
+                    <section class="avatar-crop-editor" id="avatarCropEditor" hidden aria-label="Adjust profile photo crop">
+                        <div class="avatar-crop-preview-wrap">
+                            <canvas id="avatarCropCanvas" width="320" height="320" aria-label="Circular profile photo preview"></canvas>
+                            <span>PROFILE PREVIEW</span>
+                        </div>
+                        <div class="avatar-crop-controls">
+                            <label for="avatarZoom">ZOOM <output id="avatarZoomValue">1.0×</output></label>
+                            <input id="avatarZoom" type="range" min="1" max="3" step="0.05" value="1">
+                            <label for="avatarHorizontal">LEFT ↔ RIGHT</label>
+                            <input id="avatarHorizontal" type="range" min="0" max="100" value="50">
+                            <label for="avatarVertical">UP ↕ DOWN</label>
+                            <input id="avatarVertical" type="range" min="0" max="100" value="50">
+                            <div class="avatar-crop-actions">
+                                <button type="button" id="applyAvatarCrop">USE THIS CROP</button>
+                                <button type="button" id="cancelAvatarCrop">CANCEL</button>
+                            </div>
+                            <small>Move the sliders to place your face in the centre of the circle. The saved photo will be a neat square crop.</small>
+                        </div>
+                    </section>
                     <label for="avatarUrl">OR USE AN IMAGE URL</label>
-                    <input id="avatarUrl" name="avatarUrl" type="url" maxlength="500" placeholder="https://example.com/image.jpg">
+                    <input id="avatarUrl" name="avatarUrl" type="text" inputmode="url" maxlength="550000" autocomplete="off" placeholder="https://example.com/image.jpg">
                 </div>
 
             </div>

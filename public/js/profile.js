@@ -193,38 +193,102 @@ function collectSkills() {
     return skills;
 }
 
-async function compressAvatar(file) {
-    if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG or WebP image.");
-    if (file.size > 8 * 1024 * 1024) throw new Error("Please choose an image smaller than 8 MB.");
-    const image = await createImageBitmap(file);
-    const canvas = document.createElement("canvas");
-    const scale = Math.min(1, 640 / Math.max(image.width, image.height));
-    canvas.width = Math.round(image.width * scale);
-    canvas.height = Math.round(image.height * scale);
-    canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-    image.close();
-    let quality = 0.82;
-    let dataUrl = canvas.toDataURL("image/jpeg", quality);
-    while (dataUrl.length > 520000 && quality > 0.42) {
-        quality -= 0.08;
-        dataUrl = canvas.toDataURL("image/jpeg", quality);
-    }
-    if (dataUrl.length > 520000) throw new Error("Image could not be compressed enough. Try a smaller photo.");
-    return dataUrl;
+let cropBitmap = null;
+let cropObjectUrl = null;
+
+function cropSettings() {
+    const zoom = Number($("avatarZoom").value || 1);
+    const horizontal = Number($("avatarHorizontal").value || 50) / 100;
+    const vertical = Number($("avatarVertical").value || 50) / 100;
+    const baseSize = Math.min(cropBitmap.width, cropBitmap.height);
+    const cropSize = baseSize / zoom;
+    const sx = (cropBitmap.width - cropSize) * horizontal;
+    const sy = (cropBitmap.height - cropSize) * vertical;
+    return { sx, sy, cropSize };
 }
+
+function drawAvatarCrop(targetSize = 320, quality = 0.86) {
+    if (!cropBitmap) return "";
+    const canvas = document.createElement("canvas");
+    canvas.width = targetSize;
+    canvas.height = targetSize;
+    const context = canvas.getContext("2d", { alpha: false });
+    const { sx, sy, cropSize } = cropSettings();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(cropBitmap, sx, sy, cropSize, cropSize, 0, 0, targetSize, targetSize);
+    return canvas.toDataURL("image/jpeg", quality);
+}
+
+function updateAvatarCropPreview() {
+    if (!cropBitmap) return;
+    const preview = $("avatarCropCanvas");
+    const context = preview.getContext("2d", { alpha: false });
+    const { sx, sy, cropSize } = cropSettings();
+    context.clearRect(0, 0, preview.width, preview.height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(cropBitmap, sx, sy, cropSize, cropSize, 0, 0, preview.width, preview.height);
+    $("avatarZoomValue").textContent = `${Number($("avatarZoom").value).toFixed(2)}×`;
+}
+
+function closeAvatarCropper() {
+    $("avatarCropEditor").hidden = true;
+    if (cropBitmap?.close) cropBitmap.close();
+    cropBitmap = null;
+    if (cropObjectUrl) URL.revokeObjectURL(cropObjectUrl);
+    cropObjectUrl = null;
+    $("avatarFile").value = "";
+}
+
+["avatarZoom", "avatarHorizontal", "avatarVertical"].forEach(id => {
+    $(id).addEventListener("input", updateAvatarCropPreview);
+});
 
 $("avatarFile").addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-        const dataUrl = await compressAvatar(file);
-        $("avatarUrl").value = dataUrl;
-        updatePreview();
-        feedback("Photo ready. Click SAVE CHANGES to upload it.");
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            throw new Error("Choose a JPG, PNG or WebP image.");
+        }
+        if (file.size > 8 * 1024 * 1024) throw new Error("Please choose a photo smaller than 8 MB.");
+        if (typeof createImageBitmap !== "function") throw new Error("Your browser does not support image cropping. Please update Microsoft Edge.");
+        if (cropBitmap?.close) cropBitmap.close();
+        cropBitmap = await createImageBitmap(file);
+        $("avatarZoom").value = "1";
+        $("avatarHorizontal").value = "50";
+        $("avatarVertical").value = "50";
+        $("avatarCropEditor").hidden = false;
+        updateAvatarCropPreview();
+        feedback("Adjust your photo, then click USE THIS CROP.");
     } catch (error) {
         feedback(error.message, true);
         event.target.value = "";
     }
+});
+
+$("applyAvatarCrop").addEventListener("click", () => {
+    try {
+        let dataUrl = drawAvatarCrop(512, 0.86);
+        let quality = 0.86;
+        while (dataUrl.length > 520000 && quality > 0.42) {
+            quality -= 0.08;
+            dataUrl = drawAvatarCrop(512, quality);
+        }
+        if (!dataUrl || dataUrl.length > 550000) throw new Error("This image is still too large. Try a smaller photo.");
+        $("avatarUrl").value = dataUrl;
+        updatePreview();
+        closeAvatarCropper();
+        feedback("Square crop applied. Click SAVE CHANGES to upload your profile photo.");
+    } catch (error) {
+        feedback(error.message, true);
+    }
+});
+
+$("cancelAvatarCrop").addEventListener("click", () => {
+    closeAvatarCropper();
+    feedback("Photo selection cancelled.");
 });
 
 // SAVE PROFILE

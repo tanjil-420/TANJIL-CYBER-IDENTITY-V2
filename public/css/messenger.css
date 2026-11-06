@@ -732,3 +732,22 @@
 .info-member-card{padding:22px 15px;text-align:center;border-bottom:1px solid var(--border)}.info-avatar{width:76px;height:76px;margin:5px auto 12px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(130deg,var(--cyan),var(--violet));color:#080b14;font-size:1.6rem;font-weight:900}.info-member-card h4{font-size:.9rem}.info-username{color:var(--muted);font-size:.72rem}.info-public-id{display:flex;flex-direction:column;gap:2px;margin:16px 0;padding:10px;border:1px solid #67e8f944;border-radius:9px;background:#67e8f90b}.info-public-id small{color:var(--muted);font-size:.57rem;letter-spacing:.12em}.info-public-id strong{color:var(--cyan);font-size:.85rem}.info-private-note{margin:16px 0;padding:10px;border:1px solid #fbbf2444;border-radius:9px;color:#fbbf24;font-size:.68rem}.info-bio{margin:12px 0;color:var(--muted);font-size:.7rem}.info-skill-list{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0}.info-skill-list span{padding:4px 8px;border:1px solid var(--border);border-radius:30px;color:var(--muted);font-size:.62rem}.info-profile-link{display:inline-block;margin-top:10px;color:var(--cyan);font-size:.65rem;font-weight:900}.info-group-name{padding:18px 14px;color:var(--cyan);font-weight:900}
 .search-avatar{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(130deg,var(--cyan),var(--violet));color:#08101b;font-size:.7rem;font-weight:900}.search-result-item{display:flex;align-items:center;gap:10px}.search-result-item span{flex:1}
 @media(hover:none){.message-reply-button{opacity:1;transform:none;right:-9px;top:-9px}.own-message .message-reply-button{left:-9px}}
+
+
+/* V2.4: consistent, compact avatars and visible page navigation */
+.messenger-page-nav{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.messenger-page-nav a,.chat-footer-nav a{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.59rem;font-weight:900;letter-spacing:.07em;text-decoration:none;white-space:nowrap}
+.messenger-page-nav a:hover,.chat-footer-nav a:hover{border-color:var(--cyan);color:var(--cyan);background:#67e8f90b}
+.chat-footer-nav{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.chat-footer-nav a{padding:6px 7px;font-size:.5rem}
+.conversation-item .chat-avatar{width:40px;height:40px;min-width:40px;max-width:40px;min-height:40px;max-height:40px;overflow:hidden;border-radius:50%;flex:0 0 40px}
+.active-chat-avatar{width:42px!important;height:42px!important;min-width:42px;max-width:42px;flex:0 0 42px;overflow:hidden;border-radius:50%}
+.chat-current-user .chat-avatar{width:34px;height:34px;min-width:34px;max-width:34px;flex:0 0 34px;overflow:hidden;border-radius:50%}
+.message-avatar{width:30px!important;height:30px!important;min-width:30px;max-width:30px;min-height:30px;max-height:30px;flex:0 0 30px;overflow:hidden;border-radius:50%}
+.search-avatar{width:32px;height:32px;min-width:32px;max-width:32px;flex:0 0 32px;overflow:hidden;border-radius:50%}
+.info-avatar{width:72px;height:72px;min-width:72px;max-width:72px;overflow:hidden;border-radius:50%}
+.chat-avatar img,.message-avatar img,.info-avatar img,.search-avatar img,.active-chat-avatar img,.chat-current-user .chat-avatar img{width:100%;height:100%;min-width:100%;min-height:100%;object-fit:cover;object-position:center;border-radius:50%;display:block}
+.message-row{max-width:min(82%,760px)}
+.message-bubble-wrap{min-width:0;max-width:100%}
+@media(max-width:1050px){.messenger-top-title{display:none}.messenger-topbar{gap:10px}.messenger-page-nav{gap:5px}.messenger-page-nav a{padding:7px 8px;font-size:.54rem}}
+@media(max-width:650px){.messenger-topbar{height:auto;min-height:65px;padding:8px 10px;flex-wrap:wrap;gap:6px}.messenger-logo{font-size:.82rem}.messenger-page-nav{order:3;width:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding:2px 0 5px}.messenger-page-nav a{font-size:.52rem;padding:7px 9px}.messenger-top-actions{margin-left:auto}.messenger-layout{height:calc(100dvh - 100px)}.chat-footer-nav{gap:4px}.chat-footer-nav a{font-size:.46rem;padding:5px}.chat-sidebar-footer{gap:6px;padding:10px}.chat-current-user{min-width:0}.chat-current-user strong{max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

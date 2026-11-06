@@ -59,3 +59,24 @@ Upload the project files to the GitHub repository and deploy. The startup migrat
 ### Owner account bootstrap
 
 For an existing registered owner account, set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it. The previous requested five-character owner password is accepted by the bootstrap, but it is weak and should be replaced with a strong secret after first login. Normal registration still requires at least six characters.
+
+
+## V2.4 Notes
+
+- Messenger and Skill Test now show explicit Home, Dashboard, Profile, and Event navigation links.
+- Profile photo upload includes a square crop preview with zoom and horizontal/vertical positioning controls. The final image is compressed before it is saved.
+- Messenger avatar dimensions are explicitly fixed for conversation list, header, message, search, and info panel placements.
+
+### Windows JavaScript files
+
+Do not double-click `.js` files such as `config/database.js`. They are Node.js source modules, not Windows Script Host scripts. Open them in Visual Studio Code or Notepad. Run the application from the project folder using `npm install` and then `npm start` in Windows Terminal / PowerShell. `config/database.js` is imported by `index.js`; it is not meant to be launched by itself.
+
+### Render Admin Environment
+
+Create these as three separate Environment Variables in Render (do not paste them as one combined line):
+
+- `ADMIN_USERNAME` = `tanjil.4x`
+- `ADMIN_PASSWORD` = your chosen strong admin password
+- `ADMIN_EMAIL` = your full, correct email address (use `gmail.com`, not a misspelling)
+
+If the username already exists in the database, `ADMIN_EMAIL` is not needed for bootstrap. After the first successful admin initialization, remove `ADMIN_PASSWORD` from Render so the app does not reset that password every time it restarts.

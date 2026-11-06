@@ -11,10 +11,14 @@
 <body class="messenger-body">
   <header class="messenger-topbar">
     <a class="messenger-logo" href="/">TANJIL<span>.EXE</span></a>
-    <div class="messenger-top-title">PRIVATE COMMUNICATION NETWORK</div>
+    <nav class="messenger-page-nav" aria-label="Main navigation">
+      <a href="/">HOME</a>
+      <a href="/dashboard.html">DASHBOARD</a>
+      <a href="/profile.html">MY PROFILE</a>
+      <a href="/skill-test.html">7-DAY EVENT</a>
+    </nav>
     <div class="messenger-top-actions">
       <span class="connection-status disconnected" id="connectionStatus"><i class="status-dot"></i><span id="connectionText">CONNECTING</span></span>
-      <a class="back-dashboard" href="/dashboard.html">DASHBOARD</a>
     </div>
   </header>
 
@@ -36,7 +40,11 @@
       <div class="conversation-list" id="conversationList"><div class="conversation-loading">Loading conversations...</div></div>
       <footer class="chat-sidebar-footer">
         <div class="chat-current-user"><div class="chat-avatar" id="currentUserAvatar">T</div><strong id="currentUsername">Loading...</strong></div>
-        <a href="/dashboard.html" title="Dashboard">⌂</a>
+        <nav class="chat-footer-nav" aria-label="Workspace navigation">
+          <a href="/" title="Home">HOME</a>
+          <a href="/dashboard.html" title="Dashboard">DASHBOARD</a>
+          <a href="/skill-test.html" title="Skill Test">EVENT</a>
+        </nav>
       </footer>
     </aside>
 
