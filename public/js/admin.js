@@ -4,18 +4,24 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const statLabels = {
-    total_users: 'TOTAL MEMBERS',
-    active_users: 'ACTIVE MEMBERS',
-    new_users_week: 'NEW THIS WEEK',
-    unique_visitors: 'UNIQUE VISITORS',
-    total_chats: 'CONVERSATIONS',
-    total_messages: 'MESSAGES SENT',
-    active_events: 'ACTIVE EVENTS',
-    pending_reviews: 'EVENT REVIEWS',
-    open_challenges: 'OPEN CHALLENGES',
-    pending_challenge_submissions: 'PROJECT REVIEWS'
+    total_users: 'Total members',
+    active_users: 'Active members',
+    new_users_week: 'New this week',
+    unique_visitors: 'Unique visitors',
+    total_chats: 'Conversations',
+    total_messages: 'Messages sent',
+    active_events: 'Active events',
+    pending_reviews: 'Event reviews',
+    open_challenges: 'Open challenges',
+    pending_challenge_submissions: 'Project reviews'
   };
   const ranks = ['BEGINNER', 'SKILL EXPLORER', 'SKILL BUILDER', 'VERIFIED CREATOR', 'COMMUNITY MENTOR', 'MODERATOR', 'OPERATOR', 'PLATFORM OWNER'];
+  let allUsers = [];
+
+  function safeHref(value) {
+    const href = String(value ?? '');
+    return (href.startsWith('/') && !href.startsWith('//')) || href.startsWith('#') ? href : '#';
+  }
 
   async function api(url, options = {}) {
     const response = await fetch(url, {
@@ -40,10 +46,30 @@
     ).join('');
   }
 
+  function renderConfiguration(configuration) {
+    const modules = Array.isArray(configuration.modules) ? configuration.modules : [];
+    const updates = Array.isArray(configuration.updates) ? configuration.updates : [];
+    const accessRules = Array.isArray(configuration.accessRules) ? configuration.accessRules : [];
+    $('adminModules').innerHTML = modules.map((module, index) => `
+      <a class="admin-module" href="${esc(safeHref(module.href))}">
+        <span class="admin-module-index">${String(index + 1).padStart(2, '0')}</span>
+        <span class="admin-module-label">${esc(module.label)}</span>
+        <strong>${esc(module.title)}</strong>
+        <span class="admin-module-description">${esc(module.description)}</span>
+        <span class="admin-module-link">Open workspace <span aria-hidden="true">↗</span></span>
+      </a>`).join('') || '<p class="admin-loading">No admin functions are configured.</p>';
+    $('adminUpdates').innerHTML = updates.map(update => `<li>${esc(update)}</li>`).join('') ||
+      '<li>No new operations notes.</li>';
+    $('adminAccessRules').innerHTML = accessRules.map(rule => `<li>${esc(rule)}</li>`).join('') ||
+      '<li>No access rules are configured.</li>';
+  }
+
   function renderUsers(users) {
+    allUsers = users;
     const body = $('adminUsers');
     if (!users.length) {
       body.innerHTML = '<tr><td colspan="7" class="admin-loading">No members found.</td></tr>';
+      $('adminUserCount').textContent = 'No members to display.';
       return;
     }
     body.innerHTML = users.map(user => `<tr data-user-id="${esc(user.id)}">
@@ -54,10 +80,30 @@
       <td><span class="member-status ${user.is_active ? 'active' : 'inactive'}">${user.is_active ? 'ACTIVE' : 'DISABLED'}</span></td>
       <td>${esc(new Date(user.created_at).toLocaleDateString())}</td>
       <td><button class="user-action" type="button" data-action="role"${user.is_platform_owner ? ' disabled' : ''}>SAVE ROLE</button><button class="user-action" type="button" data-action="rank">SAVE RANK</button><button class="user-action ${user.is_active ? 'danger' : ''}" type="button" data-action="status"${user.is_platform_owner ? ' disabled' : ''}>${user.is_active ? 'DISABLE' : 'ENABLE'}</button></td>
-    </tr>`).join('');
+    </tr>`).join('') + '<tr id="adminNoMatches" hidden><td colspan="7" class="admin-loading">No members match this search.</td></tr>';
+    filterUsers($('memberSearch').value);
+  }
+
+  function filterUsers(query) {
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    const rows = [...$('adminUsers').querySelectorAll('[data-user-id]')];
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const visible = row.textContent.toLocaleLowerCase().includes(normalizedQuery);
+      row.hidden = !visible;
+      if (visible) visibleCount += 1;
+    });
+    $('adminUserCount').textContent = normalizedQuery
+      ? `${visibleCount} of ${allUsers.length} members`
+      : `${allUsers.length} members`;
+    const empty = $('adminNoMatches');
+    if (empty) empty.hidden = visibleCount > 0;
   }
 
   async function loadControlCenter() {
+    const refreshButton = $('refreshAdmin');
+    refreshButton.disabled = true;
+    refreshButton.setAttribute('aria-busy', 'true');
     try {
       const current = await api('/api/auth/me');
       if (current.user?.role !== 'admin') {
@@ -65,18 +111,27 @@
         window.location.replace('/dashboard.html');
         return;
       }
-      $('adminEyebrow').textContent = current.user.isFounder ? 'PLATFORM OWNER · PRIVATE' : 'PLATFORM ADMIN · PRIVATE';
-      $('adminAccessStatus').textContent = current.user.isFounder ? 'FOUNDER ACCESS VERIFIED' : 'ADMIN ACCESS VERIFIED';
-      const [stats, users] = await Promise.all([api('/api/admin/stats'), api('/api/admin/users')]);
+      $('adminEyebrow').textContent = current.user.isFounder ? 'PLATFORM OWNER' : 'PLATFORM ADMIN';
+      $('adminAccessStatus').textContent = current.user.isFounder ? 'Owner access verified' : 'Admin access verified';
+      const [configuration, stats, users] = await Promise.all([
+        api('/api/admin/configuration'),
+        api('/api/admin/stats'),
+        api('/api/admin/users')
+      ]);
+      renderConfiguration(configuration.configuration || {});
       renderStats(stats.stats || {});
       renderUsers(users.users || []);
     } catch (error) {
       feedback(error.message, true);
       if (/login|authentication/i.test(error.message)) window.location.replace('/');
+    } finally {
+      refreshButton.disabled = false;
+      refreshButton.removeAttribute('aria-busy');
     }
   }
 
   $('refreshAdmin').addEventListener('click', loadControlCenter);
+  $('memberSearch').addEventListener('input', event => filterUsers(event.target.value));
   $('adminUsers').addEventListener('click', async event => {
     const button = event.target.closest('[data-action]');
     if (!button) return;

@@ -1,0 +1,42 @@
+{
+  "admin": {
+    "accessRole": "admin",
+    "ownerRole": "platform owner",
+    "accessRules": [
+      "Admin role is required for every admin API and control-center feature.",
+      "Admins can activate or disable member accounts, assign member/admin roles, and update community ranks.",
+      "The platform owner account cannot be disabled or have its platform role changed.",
+      "The Platform Owner community rank can only be assigned to the founder account."
+    ],
+    "modules": [
+      {
+        "title": "Platform analytics",
+        "description": "Review member growth, engagement, events, challenges, and outstanding work.",
+        "href": "#analyticsHeading",
+        "label": "Live metrics"
+      },
+      {
+        "title": "Member access",
+        "description": "Search members and manage account status, assigned role, and community rank.",
+        "href": "#membersHeading",
+        "label": "Access control"
+      },
+      {
+        "title": "Skill test reviews",
+        "description": "Review submitted learning tasks, approve progress, or request revisions with feedback.",
+        "href": "/skill-test.html#adminReviewPanel",
+        "label": "Review queue"
+      },
+      {
+        "title": "Community challenges",
+        "description": "Manage skill-based challenges and review member project submissions.",
+        "href": "/challenges.html",
+        "label": "Programs"
+      }
+    ],
+    "updates": [
+      "Member search and live platform metrics are available in this console.",
+      "Keep bootstrap credentials in deployment environment variables; never add secrets to this file."
+    ]
+  }
+}

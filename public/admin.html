@@ -13,41 +13,57 @@
 <body class="admin-body">
   <header class="admin-header">
     <a class="logo" href="/">TANJIL<span>.EXE</span></a>
-    <nav aria-label="Owner navigation">
-      <a href="/dashboard.html">DASHBOARD</a>
-      <a href="/skill-test.html">EVENT REVIEW</a>
-      <a href="/challenges.html">CHALLENGES</a>
-      <a href="/messenger.html">MESSENGER</a>
+    <nav aria-label="Admin navigation">
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/skill-test.html">Skill test</a>
+      <a href="/challenges.html">Challenges</a>
+      <a href="/messenger.html">Messenger</a>
     </nav>
   </header>
   <main class="admin-content">
     <section class="admin-hero">
-      <div><span class="admin-eyebrow" id="adminEyebrow">PLATFORM ADMIN · PRIVATE</span><h1>CONTROL CENTER</h1><p>Platform operations, member access and event review at a glance.</p></div>
-      <span class="admin-status"><i></i><span id="adminAccessStatus">ADMIN ACCESS VERIFIED</span></span>
+      <div class="admin-hero-copy">
+        <span class="admin-eyebrow" id="adminEyebrow">PLATFORM OPERATIONS</span>
+        <h1>Admin console</h1>
+        <p>One clear workspace for platform health, member access, and community programs.</p>
+      </div>
+      <span class="admin-status"><i></i><span id="adminAccessStatus">Verifying access</span></span>
     </section>
     <p class="admin-feedback" id="adminFeedback" role="status" aria-live="polite"></p>
     <section class="admin-section" aria-labelledby="analyticsHeading">
-      <div class="admin-section-heading"><div><span>OVERVIEW</span><h2 id="analyticsHeading">PLATFORM ANALYTICS</h2></div><button id="refreshAdmin" type="button">REFRESH</button></div>
+      <div class="admin-section-heading">
+        <div><span>PLATFORM OVERVIEW</span><h2 id="analyticsHeading">At a glance</h2><p>Current activity across your community.</p></div>
+        <button id="refreshAdmin" type="button"><span aria-hidden="true">↻</span> Refresh data</button>
+      </div>
       <div class="admin-stat-grid" id="adminStats"><p class="admin-loading">Loading platform analytics…</p></div>
     </section>
     <section class="admin-section" aria-labelledby="membersHeading">
-      <div class="admin-section-heading"><div><span>ACCESS CONTROL</span><h2 id="membersHeading">MEMBER MANAGEMENT</h2></div></div>
+      <div class="admin-section-heading admin-member-heading">
+        <div><span>ACCESS CONTROL</span><h2 id="membersHeading">Member management</h2><p>Manage account access, platform roles, and community ranks.</p></div>
+        <label class="admin-search"><span class="sr-only">Search members</span><input id="memberSearch" type="search" placeholder="Search name or email" autocomplete="off"></label>
+      </div>
+      <p class="admin-member-count" id="adminUserCount" aria-live="polite">Loading members…</p>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>MEMBER</th><th>EMAIL</th><th>ROLE</th><th>RANK</th><th>STATUS</th><th>JOINED</th><th>ACTIONS</th></tr></thead>
+          <thead><tr><th>Member</th><th>Email</th><th>Platform role</th><th>Community rank</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
           <tbody id="adminUsers"><tr><td colspan="7" class="admin-loading">Loading members…</td></tr></tbody>
         </table>
       </div>
     </section>
-    <section class="admin-section admin-event-panel">
-      <div><span>LEARNING & EVENTS</span><h2>SKILL TEST REVIEW QUEUE</h2><p>Review submitted work, approve progress or request a revision with feedback.</p></div>
-      <a class="admin-action" href="/skill-test.html#adminReviewPanel">OPEN EVENT REVIEWS ↗</a>
+    <section class="admin-section" aria-labelledby="operationsHeading">
+      <div class="admin-section-heading">
+        <div><span>OPERATIONS</span><h2 id="operationsHeading">Admin workspace</h2><p>Quick access to the tools and queues available to your account.</p></div>
+      </div>
+      <div class="admin-module-grid" id="adminModules"><p class="admin-loading">Loading admin functions…</p></div>
     </section>
-    <section class="admin-section admin-event-panel">
-      <div><span>SKILL-BASED PROJECTS</span><h2>COMMUNITY CHALLENGES</h2><p>Create and close challenges by skill, then review member submissions and request revisions.</p></div>
-      <a class="admin-action" href="/challenges.html">MANAGE CHALLENGES ↗</a>
+    <section class="admin-section admin-updates" aria-labelledby="updatesHeading">
+      <div class="admin-updates-icon" aria-hidden="true">✦</div>
+      <div class="admin-note-grid">
+        <div><span class="admin-eyebrow">ACCESS &amp; SAFETY</span><h2>Admin access model</h2><ul id="adminAccessRules"><li class="admin-loading">Loading access rules…</li></ul></div>
+        <div><span class="admin-eyebrow">PLATFORM UPDATES</span><h2 id="updatesHeading">Operations &amp; updates</h2><ul id="adminUpdates"><li class="admin-loading">Loading admin notes…</li></ul></div>
+      </div>
     </section>
-    <footer class="admin-footer">TANJIL CYBER IDENTITY · OWNER CONTROL CENTER</footer>
+    <footer class="admin-footer">TANJIL CYBER IDENTITY <span>·</span> SECURE ADMIN WORKSPACE</footer>
   </main>
 </body>
 </html>
