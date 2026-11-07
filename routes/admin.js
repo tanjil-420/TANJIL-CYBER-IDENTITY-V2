@@ -1,6 +1,7 @@
 
 const express = require("express");
 const { pool } = require("../config/database");
+const adminConfig = require("../config/config.json").admin;
 const {
     requireAuth,
     requireAdmin
@@ -19,6 +20,13 @@ const PROFILE_RANKS = [
 ];
 
 router.use(requireAuth, requireAdmin);
+
+router.get("/configuration", (req, res) => {
+    res.json({
+        success: true,
+        configuration: adminConfig
+    });
+});
 
 // ADMIN STATISTICS
 router.get("/stats", async (req, res, next) => {

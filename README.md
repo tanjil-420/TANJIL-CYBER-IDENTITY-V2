@@ -39,9 +39,12 @@ Set the environment variables in the Render Web Service's Environment settings. 
 - `/api/dashboard`: authenticated dashboard data
 - `/api/chat`: private and group messaging
 - `/api/challenges`: member submissions and admin challenge/review operations
-- `/api/admin`: owner analytics, member, role and rank management
+- `/api/admin`: protected admin configuration, analytics, member, role and rank management
 - `/api/health`: database and schema health
 
+## Admin console configuration
+
+The admin console reads its workspace descriptions and operational notes from `config/config.json` through the authenticated `GET /api/admin/configuration` endpoint. The JSON is server-side configuration, not a public static file. Keep it limited to non-sensitive descriptions; credentials and bootstrap values belong only in deployment environment variables.
 
 ## Platform-owner setup
 Set `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). The bootstrap password must be at least 12 characters. Remove `ADMIN_PASSWORD` after successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters.
