@@ -87,6 +87,11 @@ router.patch("/users/:id/status", async (req, res, next) => {
             });
         }
 
+        if (!isActive) {
+            const io = req.app.get("io");
+            if (io) io.in(`user:${userId}`).disconnectSockets(true);
+        }
+
         res.json({
             success: true,
             user: result.rows[0]

@@ -55,6 +55,12 @@ app.use(helmet({
 
 app.use(express.json({ limit: "600kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
+app.use((req, res, next) => {
+    if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
+        req.body = {};
+    }
+    next();
+});
 
 const sessionStore = new pgSession({
     pool,
@@ -82,6 +88,7 @@ const io = new Server(server, {
     maxHttpBufferSize: 1e6,
     transports: ["websocket", "polling"]
 });
+app.set("io", io);
 io.engine.use(sessionMiddleware);
 attachChatSocket(io);
 
@@ -176,8 +183,8 @@ async function bootstrapAdmin() {
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             throw new Error("Admin account not found. Set ADMIN_EMAIL once to create it, or register this username first.");
         }
-        if (password.length < 5 || password.length > 72) {
-            throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+        if (password.length < 6 || Buffer.byteLength(password, "utf8") > 72) {
+            throw new Error("ADMIN_PASSWORD must contain at least 6 characters and no more than 72 UTF-8 bytes.");
         }
         const bcrypt = require("bcryptjs");
         const hash = await bcrypt.hash(password, 12);
@@ -190,7 +197,7 @@ async function bootstrapAdmin() {
         return;
     }
     if (password) {
-        if (password.length < 5 || password.length > 72) throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+        if (password.length < 6 || Buffer.byteLength(password, "utf8") > 72) throw new Error("ADMIN_PASSWORD must contain at least 6 characters and no more than 72 UTF-8 bytes.");
         const bcrypt = require("bcryptjs");
         const hash = await bcrypt.hash(password, 12);
         await pool.query("UPDATE users SET role = 'admin', password_hash = $1, updated_at = NOW() WHERE username = $2", [hash, username]);

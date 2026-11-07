@@ -12,8 +12,9 @@ Create a local `.env` file from `.env.example`.
 - `DATABASE_URL`: PostgreSQL connection string
 - `SESSION_SECRET`: long, random secret used to sign sessions
 - `NODE_ENV`: `development` locally; `production` on Render
-- `APP_URL`: the public base URL of this deployed website
+- `APP_URL`: the base URL used in QR/profile links (`http://localhost:3000` locally; the public HTTPS URL in production)
 - `PORT`: optional locally; Render provides its own port
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`: optional admin bootstrap values; leave blank unless intentionally creating or promoting an admin. Passwords must be at least 6 characters and no more than 72 UTF-8 bytes.
 
 Never commit `.env` or share the values of `DATABASE_URL` and `SESSION_SECRET`.
 
@@ -28,20 +29,48 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+`npm start` runs the production server without Nodemon. `npm test` runs the built-in Node.js tests.
+
 ## Render deployment
 Set the environment variables in the Render Web Service's Environment settings. Use the PostgreSQL Internal Database URL when the service and database are in the same Render region. Set `APP_URL` to the actual public service URL (not `https://render.com`). Deploy the latest commit and check `/api/health`.
 
-## Main routes
-- `/api/auth`: register, login, current user and logout
-- `/api/profile`: profile read/update and public profile data
-- `/api/site/stats`: unique visitor and member statistics
-- `/api/dashboard`: authenticated dashboard data
-- `/api/chat`: private and group messaging
-- `/api/health`: database and schema health
+## HTTP API
+
+| Method and path | Access | Frontend use |
+|---|---|---|
+| `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` | Public for register/login; authenticated for logout | `public/app.js`; logout also in `public/js/dashboard.js` |
+| `GET /api/auth/me` | Authenticated | `public/app.js`, `public/js/messenger.js`, `public/js/skill-test.js` |
+| `GET /api/profile/me`, `PUT /api/profile/me`, `PATCH /api/profile/me` | Authenticated | `public/js/profile.js` reads and updates with `PATCH` |
+| `PATCH /api/profile/visibility` | Authenticated | API endpoint; the profile editor currently updates visibility through `PATCH /api/profile/me` |
+| `GET /api/profile/public/:username` | Public; only active, public profiles | `public/js/public-profile.js` |
+| `GET /api/qr` | Authenticated | No separate page caller; dashboard QR is included by `/api/dashboard` |
+| `GET /api/dashboard` | Authenticated | `public/js/dashboard.js` |
+| `GET /api/site/stats` | Public | `public/app.js` |
+| `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/:id/status`, `PATCH /api/admin/users/:id/role` | Admin | API endpoints; there is no admin HTML client |
+| `GET /api/chat/users`, `POST /api/chat/private`, `POST /api/chat/groups`, `POST /api/chat/groups/:id/members`, `GET /api/chat/conversations`, `GET /api/chat/:id/info`, `GET /api/chat/:id/messages` | Authenticated; conversation endpoints also require membership | `public/js/messenger.js` |
+| `GET /api/skill-test/me`, `POST /api/skill-test/start`, `POST /api/skill-test/tasks/:day/submit`, `GET /api/skill-test/rank-path` | Authenticated (the router applies authentication to all these paths) | `public/js/skill-test.js`; rank path is returned with `/me` |
+| `GET /api/skill-test/admin/submissions`, `PATCH /api/skill-test/admin/submissions/:id` | Admin | `public/js/skill-test.js` on the event page |
+| `GET /api/health` | Public | Operational health check; verifies PostgreSQL and required schema objects |
+
+Unknown `/api/*` paths return JSON 404 responses. Public pages and static assets are served from `public/`.
+
+## Socket.IO
+
+The Socket.IO browser client is loaded by `public/messenger.html`; its handlers are in `public/js/messenger.js`. Connections require the same authenticated session cookie as the HTTP API.
+
+| Event | Direction | Purpose |
+|---|---|---|
+| `chat:sync` | Client → server | Join the current user's conversation rooms |
+| `chat:join` | Client → server | Join one conversation after membership validation |
+| `chat:send` | Client → server | Send a message or reply; server acknowledges and emits `chat:new` |
+| `chat:read` | Client → server | Update read time; server emits `chat:read:update` |
+| `chat:new` | Server → client | New message in a joined conversation |
+| `chat:read:update` | Server → client | Read-state update for a joined conversation |
+| `connect`, `disconnect`, `connect_error` | Socket.IO lifecycle | Connection status shown in Messenger |
 
 
 ## Platform-owner setup
-Set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). Remove `ADMIN_PASSWORD` after the successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters; the one-time admin bootstrap accepts 5 characters for an existing account.
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL`. Remove `ADMIN_PASSWORD` after successful initialization so restarts do not reset the password. Admin bootstrap passwords follow the same minimum length as registration and are limited to 72 UTF-8 bytes.
 
 
 ## V2.3 — Seven-Day Skill Test + Messenger upgrades
@@ -58,7 +87,7 @@ Upload the project files to the GitHub repository and deploy. The startup migrat
 
 ### Owner account bootstrap
 
-For an existing registered owner account, set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it. The previous requested five-character owner password is accepted by the bootstrap, but it is weak and should be replaced with a strong secret after first login. Normal registration still requires at least six characters.
+For an existing registered owner account, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it.
 
 
 ## V2.4 Notes

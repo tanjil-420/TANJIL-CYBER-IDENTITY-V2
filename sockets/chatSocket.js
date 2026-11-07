@@ -49,7 +49,8 @@ function attachChatSocket(io) {
                      FROM conversations c
                      JOIN conversation_members cm
                      ON cm.conversation_id = c.id
-                     WHERE cm.user_id = $1`,
+                     WHERE cm.user_id = $1
+                     AND EXISTS (SELECT 1 FROM users WHERE id = $1 AND is_active = TRUE)`,
                     [userId]
                 );
 
@@ -86,9 +87,11 @@ function attachChatSocket(io) {
 
                 const result = await pool.query(
                     `SELECT 1
-                     FROM conversation_members
-                     WHERE conversation_id = $1
-                     AND user_id = $2`,
+                     FROM conversation_members cm
+                     JOIN users u ON u.id = cm.user_id
+                     WHERE cm.conversation_id = $1
+                     AND cm.user_id = $2
+                     AND u.is_active = TRUE`,
                     [conversationId, userId]
                 );
 
@@ -129,9 +132,11 @@ function attachChatSocket(io) {
 
                 const membership = await pool.query(
                     `SELECT 1
-                     FROM conversation_members
-                     WHERE conversation_id = $1
-                     AND user_id = $2`,
+                     FROM conversation_members cm
+                     JOIN users u ON u.id = cm.user_id
+                     WHERE cm.conversation_id = $1
+                     AND cm.user_id = $2
+                     AND u.is_active = TRUE`,
                     [conversationId, userId]
                 );
 
@@ -199,6 +204,7 @@ function attachChatSocket(io) {
                      SET last_read_at = NOW()
                      WHERE conversation_id = $1
                      AND user_id = $2
+                     AND EXISTS (SELECT 1 FROM users WHERE id = $2 AND is_active = TRUE)
                      RETURNING conversation_id`,
                     [conversationId, userId]
                 );

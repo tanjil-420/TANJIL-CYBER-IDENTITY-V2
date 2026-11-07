@@ -6,7 +6,9 @@ const router = express.Router();
 
 router.get("/", requireAuth, async (req, res, next) => {
     try {
-        const baseURL = (process.env.APP_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME || "localhost:3000"}`).replace(/\/+$/, "");
+        const baseURL = (process.env.APP_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
+            ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
+            : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/+$/, "");
         const profileURL = `${baseURL}/public-profile.html?username=${encodeURIComponent(req.user.username)}`;
         const qr = await QRCode.toDataURL(profileURL, {
             errorCorrectionLevel: "H",

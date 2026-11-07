@@ -30,7 +30,9 @@ router.get("/", async (req, res, next) => {
             [req.user.id]
         );
 
-        const baseUrl = (process.env.APP_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME || "localhost:3000"}`).replace(/\/+$/, "");
+        const baseUrl = (process.env.APP_URL || (process.env.RENDER_EXTERNAL_HOSTNAME
+            ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
+            : `http://localhost:${process.env.PORT || 3000}`)).replace(/\/+$/, "");
         const publicProfileUrl = `${baseUrl}/public-profile.html?username=${encodeURIComponent(row.username)}`;
         const qrCodeUrl = await QRCode.toDataURL(publicProfileUrl, { errorCorrectionLevel: "H", width: 800, margin: 2 });
 

@@ -37,8 +37,8 @@ router.post("/register", async (req, res, next) => {
     if (!validEmail(email) || email.length > 255) {
         return res.status(400).json({ error: "Enter a valid email address." });
     }
-    if (password.length < 6 || password.length > 72) {
-        return res.status(400).json({ error: "Password must contain at least 6 characters (maximum 72)." });
+    if (password.length < 6 || Buffer.byteLength(password, "utf8") > 72) {
+        return res.status(400).json({ error: "Password must contain at least 6 characters and no more than 72 UTF-8 bytes." });
     }
 
     let client;
@@ -106,8 +106,11 @@ router.post("/login", async (req, res, next) => {
     const identity = String(req.body.identity || "").trim().toLowerCase();
     const password = String(req.body.password || "");
 
-    if (!identity || !password || password.length > 72) {
+    if (!identity || !password) {
         return res.status(400).json({ error: "Enter your username/email and password." });
+    }
+    if (Buffer.byteLength(password, "utf8") > 72) {
+        return res.status(400).json({ error: "Password must not exceed 72 UTF-8 bytes." });
     }
 
     try {
