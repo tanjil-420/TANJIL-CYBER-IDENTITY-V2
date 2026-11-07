@@ -9,7 +9,7 @@ router.use(requireAuth);
 router.get("/", async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT u.id, u.username, u.email, u.role, u.is_active, u.created_at,
+            `SELECT u.id, u.username, u.email, u.role, u.is_active, u.is_platform_owner, u.created_at,
                     p.display_name, p.bio, p.location, p.education,
                     p.skills, p.rank_title, p.is_public
              FROM users u
@@ -41,6 +41,7 @@ router.get("/", async (req, res, next) => {
                 username: row.username,
                 email: row.email,
                 role: row.role,
+                isFounder: row.is_platform_owner === true,
                 isActive: row.is_active,
                 createdAt: row.created_at,
                 displayName: row.display_name

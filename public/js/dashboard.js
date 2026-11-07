@@ -71,7 +71,8 @@ function renderDashboard(data) {
         (displayName || "U").charAt(0).toUpperCase();
 
     setText("sidebarUsername", "@" + user.username);
-    setText("welcomeUsername", displayName);
+    setText("welcomeGreeting", user.isFounder ? "Welcome," : "Welcome back,");
+    setText("welcomeUsername", user.isFounder ? "Platform Owner" : displayName);
     setText("profileDisplayName", displayName);
     setText("profileUsername", "@" + user.username);
     setText("profileRank", profile.rankTitle || "BEGINNER");
