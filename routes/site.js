@@ -1,26 +1,16 @@
 const express = require("express");
 const crypto = require("crypto");
 const { pool } = require("../config/database");
+const { readCookie } = require("../utils/cookies");
 
 const router = express.Router();
 const isProduction = process.env.NODE_ENV === "production";
 const VISITOR_COOKIE = "tanjil.visitor";
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60 * 1000;
 
-function readCookie(req, name) {
-    const header = req.headers.cookie || "";
-    for (const part of header.split(";")) {
-        const separator = part.indexOf("=");
-        if (separator < 0) continue;
-        const key = part.slice(0, separator).trim();
-        if (key === name) return decodeURIComponent(part.slice(separator + 1).trim());
-    }
-    return null;
-}
-
 router.get("/stats", async (req, res, next) => {
     try {
-        let visitorToken = readCookie(req, VISITOR_COOKIE);
+        let visitorToken = readCookie(req.headers.cookie, VISITOR_COOKIE);
         if (!visitorToken || !/^[a-f0-9]{64}$/.test(visitorToken)) {
             visitorToken = crypto.randomBytes(32).toString("hex");
             res.cookie(VISITOR_COOKIE, visitorToken, {

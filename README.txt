@@ -1,32 +1,16 @@
-TANJIL.EXE — CYBER IDENTITY PLATFORM v2.1
+TANJIL.EXE - CYBER IDENTITY PLATFORM
 
-A Node.js + Express + PostgreSQL platform for personal profiles, public learning guides, visitor/member statistics and private/group messaging.
+Node.js 20-26, Express and PostgreSQL application for profiles, learning guides,
+the Skill Test event and private/group messaging.
 
-REQUIREMENTS
-- Node.js >=20 and <27
-- PostgreSQL
+Quick start:
+1. Copy .env.example to .env and configure DATABASE_URL and SESSION_SECRET.
+2. Run npm install.
+3. Run npm run dev, then open http://localhost:3000.
 
-ENVIRONMENT
-Create .env locally from .env.example. Configure DATABASE_URL, SESSION_SECRET, NODE_ENV and APP_URL. Never commit .env or expose database credentials/session secrets.
+The app applies database/schema.sql at startup. The database user needs permission
+to create and update the application tables. Use npm start for the production
+server and npm test for the built-in tests.
 
-DATABASE
-At startup, index.js applies database/schema.sql. The configured database user needs DDL permission. The schema uses CREATE TABLE IF NOT EXISTS and adds missing profile columns without deleting existing rows.
-
-LOCAL START
-npm install
-npm run dev
-Open http://localhost:3000
-
-RENDER
-Set environment variables in the Web Service Environment settings. Use the Internal Database URL when the app and PostgreSQL are in the same Render region. APP_URL must be the deployed website URL. After deployment, check /api/health.
-
-FEATURES
-- Register/login with PostgreSQL-backed sessions
-- User profile and skills on the homepage after login
-- Public beginner skill guides
-- Unique visitor and registered member counters
-- Public profile and QR code
-- Private/group Messenger with Socket.IO
-- Admin API
-
-V2.3: 7-Day Skill Test event, Owner submission review, achievement ranks, Messenger replies, circular profile avatars and public/private profile ID info. Run the updated schema on startup by deploying the included files.
+For the complete environment-variable list, HTTP route inventory, Socket.IO
+events and deployment instructions, see README.md.

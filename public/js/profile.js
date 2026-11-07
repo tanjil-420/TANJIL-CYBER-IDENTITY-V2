@@ -46,7 +46,7 @@ function safeImageUrl(value) {
     try {
         const url = new URL(value);
 
-        if (!["http:", "https:"].includes(url.protocol) && !/^data:image\/(jpeg|png|webp);base64,/.test(value)) {
+        if (url.protocol !== "https:" && !/^data:image\/(jpeg|png|webp);base64,/.test(value)) {
             return "";
         }
 
@@ -178,7 +178,7 @@ function validateOptionalUrl(id) {
     if (id === "avatarUrl" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value) && value.length <= 550000) {
         return value;
     }
-    if (!["http:", "https:"].includes(url.protocol)) {
+    if (url.protocol !== "https:") {
         throw new Error("Only HTTPS links are allowed.");
     }
 
