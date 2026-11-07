@@ -1,6 +1,6 @@
-# TANJIL.EXE — Cyber Identity Platform
+# TANJIL Cyber Identity — Skill-Based Community Platform
 
-TANJIL.EXE is a Node.js, Express and PostgreSQL portfolio, learning-guide and messenger platform.
+TANJIL Cyber Identity is a Node.js, Express and PostgreSQL community platform for profiles, skill learning, project challenges, events and member messaging.
 
 ## Requirements
 - Node.js 20 or later, below 27
@@ -14,6 +14,7 @@ Create a local `.env` file from `.env.example`.
 - `NODE_ENV`: `development` locally; `production` on Render
 - `APP_URL`: the public base URL of this deployed website
 - `PORT`: optional locally; Render provides its own port
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`: optional admin bootstrap values; use a strong password of at least 12 characters and remove it after setup
 
 Never commit `.env` or share the values of `DATABASE_URL` and `SESSION_SECRET`.
 
@@ -37,11 +38,13 @@ Set the environment variables in the Render Web Service's Environment settings. 
 - `/api/site/stats`: unique visitor and member statistics
 - `/api/dashboard`: authenticated dashboard data
 - `/api/chat`: private and group messaging
+- `/api/challenges`: member submissions and admin challenge/review operations
+- `/api/admin`: owner analytics, member, role and rank management
 - `/api/health`: database and schema health
 
 
 ## Platform-owner setup
-Set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). Remove `ADMIN_PASSWORD` after the successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters; the one-time admin bootstrap accepts 5 characters for an existing account.
+Set `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). The bootstrap password must be at least 12 characters. Remove `ADMIN_PASSWORD` after successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters.
 
 
 ## V2.3 — Seven-Day Skill Test + Messenger upgrades
@@ -58,7 +61,7 @@ Upload the project files to the GitHub repository and deploy. The startup migrat
 
 ### Owner account bootstrap
 
-For an existing registered owner account, set `ADMIN_USERNAME=tanjil.4x` and `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it. The previous requested five-character owner password is accepted by the bootstrap, but it is weak and should be replaced with a strong secret after first login. Normal registration still requires at least six characters.
+For an existing registered owner account, set `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it.
 
 
 ## V2.4 Notes
@@ -66,6 +69,15 @@ For an existing registered owner account, set `ADMIN_USERNAME=tanjil.4x` and `AD
 - Messenger and Skill Test now show explicit Home, Dashboard, Profile, and Event navigation links.
 - Profile photo upload includes a square crop preview with zoom and horizontal/vertical positioning controls. The final image is compressed before it is saved.
 - Messenger avatar dimensions are explicitly fixed for conversation list, header, message, search, and info panel placements.
+
+## V2.5 Professional Edition
+
+- Messenger supports replies, reactions, per-message seen receipts, typing indicators, and live online presence.
+- Owners can review platform analytics, manage member status/roles/ranks, create skill challenges, and approve or request revisions to submissions.
+- Members can submit work to skill challenges. Approved work earns achievements; the seven-day event remains available and now updates persistent ranks and achievements.
+- Public profiles use `/user/:username` and display rank, achievements, skills, and a founder badge for admin accounts. Existing query-based URLs remain supported.
+- Dark, Light, AMOLED, Cyber Blue, and Neon Purple themes are available throughout the app, with mobile bottom navigation.
+- See [V2.5_IMPLEMENTATION_PLAN.md](V2.5_IMPLEMENTATION_PLAN.md) for the repository assessment, delivered scope, remaining rollout, and production acceptance criteria.
 
 ### Windows JavaScript files
 
@@ -76,7 +88,7 @@ Do not double-click `.js` files such as `config/database.js`. They are Node.js s
 Create these as three separate Environment Variables in Render (do not paste them as one combined line):
 
 - `ADMIN_USERNAME` = `tanjil.4x`
-- `ADMIN_PASSWORD` = your chosen strong admin password
+- `ADMIN_PASSWORD` = your chosen strong admin password (at least 12 characters)
 - `ADMIN_EMAIL` = your full, correct email address (use `gmail.com`, not a misspelling)
 
 If the username already exists in the database, `ADMIN_EMAIL` is not needed for bootstrap. After the first successful admin initialization, remove `ADMIN_PASSWORD` from Render so the app does not reset that password every time it restarts.

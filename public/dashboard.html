@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="/js/theme.js" defer></script>
 </head>
 
 <body class="dashboard-body">
@@ -48,6 +49,12 @@
 
         <a href="/skill-test.html" class="side-link">
             <span>⚑</span> 7-Day Skill Test
+        </a>
+        <a href="/challenges.html" class="side-link">
+            <span>🏆</span> Skill Challenges
+        </a>
+        <a href="/admin.html" class="side-link" data-admin-only hidden>
+            <span>♛</span> Owner Control Center
         </a>
 
         <span class="nav-label">PERSONALIZATION</span>
@@ -164,46 +171,6 @@
         </section>
 
 
-        <!-- QUICK ACTIONS -->
-
-        <section class="dashboard-section">
-
-            <div class="dashboard-section-title">
-                <h2>QUICK ACCESS</h2>
-                <span>// 01</span>
-            </div>
-
-            <div class="quick-grid">
-
-                <a href="/profile.html" class="quick-card">
-                    <span>👤</span>
-                    <strong>EDIT PROFILE</strong>
-                    <small>Manage your identity</small>
-                </a>
-
-                <a href="/messenger.html" class="quick-card">
-                    <span>💬</span>
-                    <strong>OPEN MESSENGER</strong>
-                    <small>Inbox and group chats</small>
-                </a>
-
-                <a href="#qr-section" class="quick-card">
-                    <span>▦</span>
-                    <strong>PERSONAL QR</strong>
-                    <small>Share your portfolio</small>
-                </a>
-
-                <a href="#account-section" class="quick-card">
-                    <span>⚙</span>
-                    <strong>SETTINGS</strong>
-                    <small>Account preferences</small>
-                </a>
-
-            </div>
-
-        </section>
-
-
         <!-- PROFILE PREVIEW -->
 
         <section class="dashboard-section">
@@ -224,6 +191,7 @@
                     <h2 id="profileDisplayName">Loading...</h2>
 
                     <p id="profileUsername">@username</p>
+                    <span class="rank-badge" id="profileRank">BEGINNER</span>
 
                     <p id="profileBio">
                         Your personal digital identity.

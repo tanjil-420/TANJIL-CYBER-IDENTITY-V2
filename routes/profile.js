@@ -38,6 +38,7 @@ function normalizeProfile(row) {
         avatarUrl: row.avatar_url || "",
         socials,
         skills: Array.isArray(row.skills) ? row.skills : [],
+        rankTitle: row.rank_title || "BEGINNER",
         isPublic: row.is_public !== false,
         theme: row.theme || "cyberpunk"
     };
@@ -51,7 +52,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
                     p.display_name, p.bio, p.age, p.education,
                     p.location, p.status, p.phone, p.public_email,
                     p.public_phone, p.links, p.skills, p.avatar_url,
-                    p.theme, p.is_public
+                    p.theme, p.rank_title, p.is_public
              FROM users u
              JOIN profiles p ON p.user_id = u.id
              WHERE u.id = $1`,
@@ -60,9 +61,9 @@ router.get("/me", requireAuth, async (req, res, next) => {
         if (!result.rows.length) return res.status(404).json({ error: "Profile not found." });
         const row = result.rows[0];
         res.json({
-            user: { id: row.id, username: row.username, email: row.email, role: req.user.role },
+            user: { id: row.id, username: row.username, email: row.email, role: req.user.role, isFounder: req.user.is_platform_owner === true },
             profile: normalizeProfile(row),
-            publicProfileUrl: `/public-profile.html?username=${encodeURIComponent(row.username)}`
+            publicProfileUrl: `/user/${encodeURIComponent(row.username)}`
         });
     } catch (error) {
         next(error);
@@ -129,7 +130,7 @@ async function updateMyProfile(req, res, next) {
             success: true,
             message: "Profile updated successfully.",
             profile: normalizeProfile(result.rows[0]),
-            publicProfileUrl: `/public-profile.html?username=${encodeURIComponent(req.user.username)}`
+            publicProfileUrl: `/user/${encodeURIComponent(req.user.username)}`
         });
     } catch (error) {
         if (error.message.startsWith("Invalid ")) return res.status(400).json({ error: error.message });
@@ -156,10 +157,10 @@ router.get("/public/:username", async (req, res, next) => {
     try {
         const username = String(req.params.username || "").trim().toLowerCase();
         const result = await pool.query(
-            `SELECT u.username, u.email, p.display_name, p.bio, p.age,
+            `SELECT u.id, u.username, u.email, u.role, u.is_platform_owner, p.display_name, p.bio, p.age,
                     p.education, p.location, p.status, p.phone,
                     p.public_phone, p.public_email, p.links, p.skills,
-                    p.avatar_url, p.theme
+                    p.avatar_url, p.theme, p.rank_title
              FROM users u
              JOIN profiles p ON p.user_id = u.id
              WHERE u.username = $1 AND u.is_active = TRUE AND p.is_public = TRUE`,
@@ -167,10 +168,35 @@ router.get("/public/:username", async (req, res, next) => {
         );
         if (!result.rows.length) return res.status(404).json({ error: "Public profile not found." });
         const row = result.rows[0];
+        const achievements = await pool.query(
+            `SELECT achievement_key, title, description, earned_at
+             FROM user_achievements WHERE user_id = $1
+             ORDER BY earned_at DESC`,
+            [row.id]
+        );
+        const projects = await pool.query(
+            `SELECT c.title, c.skill_name, s.submission_text, s.submission_url, s.reviewed_at
+             FROM challenge_submissions s
+             JOIN challenges c ON c.id = s.challenge_id
+             WHERE s.user_id = $1 AND s.status = 'approved'
+             ORDER BY s.reviewed_at DESC
+             LIMIT 30`,
+            [row.id]
+        );
         const profile = normalizeProfile({ ...row, is_public: true });
         if (!row.public_phone) profile.phone = null;
         const email = row.public_email ? row.email : null;
-        res.json({ success: true, profile: { ...profile, username: row.username, email } });
+        res.json({
+            success: true,
+            profile: {
+                ...profile,
+                username: row.username,
+                email,
+                isFounder: row.is_platform_owner === true,
+                achievements: achievements.rows,
+                projects: projects.rows
+            }
+        });
     } catch (error) {
         next(error);
     }

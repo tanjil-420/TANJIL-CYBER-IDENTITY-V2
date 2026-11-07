@@ -7,6 +7,16 @@ const {
 } = require("../middleware/auth");
 
 const router = express.Router();
+const PROFILE_RANKS = [
+    "BEGINNER",
+    "SKILL EXPLORER",
+    "SKILL BUILDER",
+    "VERIFIED CREATOR",
+    "COMMUNITY MENTOR",
+    "MODERATOR",
+    "OPERATOR",
+    "PLATFORM OWNER"
+];
 
 router.use(requireAuth, requireAdmin);
 
@@ -19,7 +29,13 @@ router.get("/stats", async (req, res, next) => {
                 (SELECT COUNT(*) FROM users
                     WHERE is_active = TRUE) AS active_users,
                 (SELECT COUNT(*) FROM conversations) AS total_chats,
-                (SELECT COUNT(*) FROM messages) AS total_messages
+                (SELECT COUNT(*) FROM messages) AS total_messages,
+                (SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '7 days') AS new_users_week,
+                (SELECT COUNT(*) FROM skill_test_enrollments WHERE status = 'active') AS active_events,
+                (SELECT COUNT(*) FROM skill_test_tasks WHERE status = 'submitted') AS pending_reviews,
+                (SELECT COUNT(*) FROM challenges WHERE status = 'open') AS open_challenges,
+                (SELECT COUNT(*) FROM challenge_submissions WHERE status = 'submitted') AS pending_challenge_submissions,
+                (SELECT COUNT(*) FROM site_visitors) AS unique_visitors
         `);
 
         res.json({
@@ -36,10 +52,10 @@ router.get("/stats", async (req, res, next) => {
 router.get("/users", async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT id, username, email, role,
-                    is_active, created_at
-             FROM users
-             ORDER BY created_at DESC
+            `SELECT u.id, u.username, u.email, u.role, u.is_platform_owner,
+                    u.is_active, u.created_at, p.rank_title
+             FROM users u LEFT JOIN profiles p ON p.user_id = u.id
+             ORDER BY u.created_at DESC
              LIMIT 200`
         );
 
@@ -71,6 +87,10 @@ router.patch("/users/:id/status", async (req, res, next) => {
             return res.status(400).json({
                 error: "You cannot disable your own account."
             });
+        }
+        const target = await pool.query("SELECT is_platform_owner FROM users WHERE id = $1", [userId]);
+        if (target.rows[0]?.is_platform_owner) {
+            return res.status(403).json({ error: "The Platform Owner account cannot be disabled." });
         }
 
         const result = await pool.query(
@@ -116,6 +136,10 @@ router.patch("/users/:id/role", async (req, res, next) => {
                 error: "You cannot change your own role."
             });
         }
+        const target = await pool.query("SELECT is_platform_owner FROM users WHERE id = $1", [userId]);
+        if (target.rows[0]?.is_platform_owner) {
+            return res.status(403).json({ error: "The Platform Owner role cannot be changed." });
+        }
 
         const result = await pool.query(
             `UPDATE users
@@ -136,6 +160,31 @@ router.patch("/users/:id/role", async (req, res, next) => {
             user: result.rows[0]
         });
 
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.patch("/users/:id/rank", async (req, res, next) => {
+    const userId = Number(req.params.id);
+    const rank = req.body.rank;
+    if (!Number.isSafeInteger(userId) || userId <= 0 || !PROFILE_RANKS.includes(rank)) {
+        return res.status(400).json({ error: "Invalid rank information." });
+    }
+    try {
+        if (rank === "PLATFORM OWNER") {
+            const owner = await pool.query("SELECT is_platform_owner FROM users WHERE id = $1", [userId]);
+            if (!owner.rows[0]?.is_platform_owner) {
+                return res.status(403).json({ error: "Only the founder account can hold the Platform Owner rank." });
+            }
+        }
+        const result = await pool.query(
+            `UPDATE profiles SET rank_title = $1, updated_at = NOW()
+             WHERE user_id = $2 RETURNING user_id, rank_title`,
+            [rank, userId]
+        );
+        if (!result.rows.length) return res.status(404).json({ error: "User profile not found." });
+        res.json({ success: true, rank: result.rows[0].rank_title });
     } catch (error) {
         next(error);
     }

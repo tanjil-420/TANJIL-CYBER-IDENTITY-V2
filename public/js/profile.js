@@ -146,7 +146,7 @@ async function loadProfile() {
         updatePreview();
 
         const publicUrl = data.publicProfileUrl ||
-            `/u/${encodeURIComponent(user.username)}`;
+            `/user/${encodeURIComponent(user.username)}`;
 
         $("profilePublicUrl").textContent =
             new URL(publicUrl, location.origin).href;

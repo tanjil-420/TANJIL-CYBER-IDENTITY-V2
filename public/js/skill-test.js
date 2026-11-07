@@ -23,7 +23,7 @@
   function renderRanks(ranks, approvedCount) {
     const rankGrid = $('rankGrid');
     rankGrid.innerHTML = (ranks || []).map(rank => {
-      const active = (rank.title === 'SKILL STARTER' && approvedCount >= 1) || (rank.title === 'SKILL BUILDER' && approvedCount >= 3) || (rank.title === 'SKILL GRADUATE' && approvedCount >= 7);
+      const active = (rank.title === 'SKILL EXPLORER' && approvedCount >= 1) || (rank.title === 'SKILL BUILDER' && approvedCount >= 3) || (rank.title === 'VERIFIED CREATOR' && approvedCount >= 7);
       return `<article class="rank-item"><strong>${esc(rank.title)}</strong><span>${esc(rank.detail)}</span><small>${active ? 'UNLOCKED' : rank.mode === 'owner' ? 'OWNER ONLY' : rank.mode === 'manual' ? 'MANUAL APPOINTMENT' : 'MILESTONE'}</small></article>`;
     }).join('');
   }
@@ -68,7 +68,7 @@
     $('approvedCount').textContent = approved;
     $('progressFill').style.width = `${(approved / 7) * 100}%`;
     $('eventStatus').textContent = enrollment.status === 'completed' ? 'EVENT COMPLETED' : 'IN PROGRESS';
-    $('currentRank').textContent = approved >= 7 ? 'SKILL GRADUATE' : approved >= 3 ? 'SKILL BUILDER' : approved >= 1 ? 'SKILL STARTER' : 'MEMBER';
+    $('currentRank').textContent = approved >= 7 ? 'VERIFIED CREATOR' : approved >= 3 ? 'SKILL BUILDER' : approved >= 1 ? 'SKILL EXPLORER' : 'BEGINNER';
     $('taskList').innerHTML = tasks.map(renderTask).join('');
     renderRanks(data.rankPath, approved);
   }

@@ -148,19 +148,14 @@ function tasksForSkill(skill) {
 
 function rankPath() {
   return [
-    { title: "MEMBER", detail: "Default account status", mode: "automatic" },
-    { title: "SKILL STARTER", detail: "1 approved task", mode: "automatic" },
-    { title: "SKILL BUILDER", detail: "3 approved tasks", mode: "automatic" },
-    { title: "SKILL GRADUATE", detail: "All 7 tasks approved", mode: "automatic" },
-    { title: "VERIFIED EXPERT", detail: "Extra skill verification by the Owner", mode: "manual" },
-    { title: "COMMUNITY MENTOR", detail: "Selected to help other learners", mode: "manual" },
-    { title: "EVENT EVALUATOR", detail: "Appointed to review event work", mode: "manual" },
-    { title: "COMMUNITY MODERATOR", detail: "Trusted community safety role", mode: "manual" },
+    { title: "BEGINNER", detail: "Starting rank for every member", mode: "automatic" },
+    { title: "SKILL EXPLORER", detail: "1 approved event task", mode: "automatic" },
+    { title: "SKILL BUILDER", detail: "3 approved event tasks", mode: "automatic" },
+    { title: "VERIFIED CREATOR", detail: "All 7 event tasks approved", mode: "automatic" },
+    { title: "COMMUNITY MENTOR", detail: "Selected by the Platform Owner", mode: "manual" },
+    { title: "MODERATOR", detail: "Trusted community safety role", mode: "manual" },
     { title: "OPERATOR", detail: "Limited operational responsibilities", mode: "manual" },
-    { title: "CONTROLLER", detail: "High-trust platform oversight", mode: "manual" },
-    { title: "HONORARY ADMIN", detail: "Admin title/badge only — no system permissions", mode: "manual" },
-    { title: "PLATFORM ADMIN", detail: "Privileged account; Owner only", mode: "owner" },
-    { title: "PLATFORM OWNER", detail: "Platform creator", mode: "owner" }
+    { title: "PLATFORM OWNER", detail: "Owner identity only; permissions remain separately controlled", mode: "owner" }
   ];
 }
 
@@ -187,7 +182,7 @@ router.get("/me", async (req, res, next) => {
         reviewerNote: row.reviewer_note || "", submittedAt: row.submitted_at, reviewedAt: row.reviewed_at };
     });
     const approvedCount = tasks.filter(task => task.status === "approved").length;
-    const milestone = approvedCount >= 7 ? "SKILL GRADUATE" : approvedCount >= 3 ? "SKILL BUILDER" : approvedCount >= 1 ? "SKILL STARTER" : "MEMBER";
+    const milestone = approvedCount >= 7 ? "VERIFIED CREATOR" : approvedCount >= 3 ? "SKILL BUILDER" : approvedCount >= 1 ? "SKILL EXPLORER" : "BEGINNER";
     res.json({ success: true, enrolled: true, enrollment: { id: enrollment.id, skill: enrollment.skill_name, startedAt: enrollment.started_at,
       completedAt: enrollment.completed_at, status: enrollment.status, rankTitle: enrollment.rank_title || milestone }, tasks, approvedCount, rankPath: rankPath() });
   } catch (error) { next(error); }
@@ -274,11 +269,34 @@ router.patch("/admin/submissions/:id", requireAdmin, async (req, res, next) => {
     if (!update.rows.length) { await client.query("ROLLBACK"); return res.status(404).json({ error: "Submission not found or already reviewed." }); }
     const enrollmentId = update.rows[0].enrollment_id;
     const count = await client.query("SELECT COUNT(*)::int AS approved FROM skill_test_tasks WHERE enrollment_id = $1 AND status = 'approved'", [enrollmentId]);
+    const rank = count.rows[0].approved >= 7 ? "VERIFIED CREATOR" : count.rows[0].approved >= 3 ? "SKILL BUILDER" : count.rows[0].approved >= 1 ? "SKILL EXPLORER" : "BEGINNER";
+    await client.query(
+      `UPDATE profiles SET rank_title = $1, updated_at = NOW()
+       WHERE user_id = (SELECT user_id FROM skill_test_enrollments WHERE id = $2)
+         AND rank_title IN ('BEGINNER', 'SKILL EXPLORER', 'SKILL BUILDER', 'VERIFIED CREATOR')`,
+      [rank, enrollmentId]
+    );
+    if (count.rows[0].approved >= 1) {
+      await client.query(
+        `INSERT INTO user_achievements (user_id, achievement_key, title, description)
+         SELECT user_id, 'first-project', 'First Project', 'Earned for completing your first reviewed skill task.'
+         FROM skill_test_enrollments WHERE id = $1
+         ON CONFLICT (user_id, achievement_key) DO NOTHING`,
+        [enrollmentId]
+      );
+    }
     if (count.rows[0].approved === 7) {
       await client.query("UPDATE skill_test_enrollments SET status = 'completed', completed_at = COALESCE(completed_at, NOW()), rank_title = 'SKILL GRADUATE' WHERE id = $1", [enrollmentId]);
+      await client.query(
+        `INSERT INTO user_achievements (user_id, achievement_key, title, description)
+         SELECT user_id, 'skill-graduate', 'Skill Graduate', 'All seven reviewed skill tasks were approved.'
+         FROM skill_test_enrollments WHERE id = $1
+         ON CONFLICT (user_id, achievement_key) DO NOTHING`,
+        [enrollmentId]
+      );
     }
     await client.query("COMMIT");
-    res.json({ success: true, status, approvedCount: count.rows[0].approved, completed: count.rows[0].approved === 7, rankTitle: count.rows[0].approved === 7 ? "SKILL GRADUATE" : null });
+    res.json({ success: true, status, approvedCount: count.rows[0].approved, completed: count.rows[0].approved === 7, rankTitle: rank });
   } catch (error) { await client.query("ROLLBACK").catch(() => {}); next(error); }
   finally { client.release(); }
 });

@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const state = { user: null, socket: null, conversations: [], activeId: null, activeConversation: null, messages: [], tab: 'all', searchTimer: null, toastTimer: null, replyTo: null };
+  const state = { user: null, socket: null, conversations: [], activeId: null, activeConversation: null, messages: [], tab: 'all', searchTimer: null, toastTimer: null, replyTo: null, onlineUsers: new Set(), typingUsers: new Map(), remoteTypingTimers: new Map(), localTypingTimer: null, lastTypingAt: 0 };
+  const REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉', '🔥', '👏'];
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const sameId = (a,b) => String(a) === String(b);
   const safeAvatar = value => {
@@ -34,7 +35,7 @@
     return { ...c, id: c.id, type: c.type, name: c.name || c.other_username || (c.type === 'group' ? 'Group chat' : 'Private chat'), lastMessage: c.last_message || '', unreadCount: Number(c.unread_count || 0) };
   }
   function normalizeMessage(m) {
-    return { ...m, conversationId: m.conversation_id, senderId: m.sender_id, senderUsername: m.sender_username || 'User', senderRole: m.sender_role || 'user', senderAvatarUrl: m.sender_avatar_url || '', createdAt: m.created_at, content: m.content || '', replyToId: m.reply_to_id, replyContent: m.reply_content || '', replySenderUsername: m.reply_sender_username || '' };
+    return { ...m, conversationId: m.conversation_id, senderId: m.sender_id, senderUsername: m.sender_username || 'User', senderRole: m.sender_role || 'user', senderIsFounder: m.sender_is_founder === true, senderAvatarUrl: m.sender_avatar_url || '', createdAt: m.created_at, content: m.content || '', replyToId: m.reply_to_id, replyContent: m.reply_content || '', replySenderUsername: m.reply_sender_username || '', reactions: Array.isArray(m.reactions) ? m.reactions : [], readBy: Array.isArray(m.read_by) ? m.read_by.map(String) : [] };
   }
 
   async function loadCurrentUser() {
@@ -53,7 +54,10 @@
     const list = $('conversationList');
     const items = state.conversations.filter(c => (state.tab === 'all' || c.type === state.tab) && c.name.toLowerCase().includes(query));
     if (!items.length) { list.innerHTML = '<div class="conversation-loading">No conversations found.</div>'; return; }
-    list.innerHTML = items.map(c => `<div class="conversation-item ${sameId(c.id,state.activeId) ? 'active' : ''}" data-conversation-id="${esc(c.id)}" role="button" tabindex="0">${avatarMarkup(c.other_avatar_url,c.name)}<div class="conversation-details"><strong>${esc(c.name)}</strong><p>${esc(c.lastMessage || (c.type === 'group' ? 'Group conversation' : 'Start chatting'))}</p></div><div class="conversation-meta"><small>${esc(formatTime(c.created_at))}</small>${c.unreadCount ? `<span class="unread-count">${c.unreadCount}</span>` : ''}</div></div>`).join('');
+    list.innerHTML = items.map(c => {
+      const online = c.type === 'private' && state.onlineUsers.has(String(c.other_user_id));
+      return `<div class="conversation-item ${sameId(c.id,state.activeId) ? 'active' : ''}" data-conversation-id="${esc(c.id)}" role="button" tabindex="0"><div class="conversation-avatar-wrap">${avatarMarkup(c.other_avatar_url,c.name)}${online ? '<i class="presence-dot is-online" aria-label="Online"></i>' : ''}</div><div class="conversation-details"><strong>${esc(c.name)}</strong><p>${esc(c.lastMessage || (online ? 'ONLINE' : c.type === 'group' ? 'Group conversation' : 'Start chatting'))}</p></div><div class="conversation-meta"><small>${esc(formatTime(c.created_at))}</small>${c.unreadCount ? `<span class="unread-count">${c.unreadCount}</span>` : ''}</div></div>`;
+    }).join('');
   }
   async function loadConversations() {
     const data = await api('/api/chat/conversations');
@@ -66,10 +70,13 @@
     if (!state.messages.length) { box.innerHTML = '<div class="message-loading">No messages yet. Say hello!</div>'; return; }
     box.innerHTML = state.messages.map(m => {
       const own = state.user && sameId(m.senderId, state.user.id);
-      const ownerMark = m.senderRole === 'admin' ? '<span class="owner-message-badge">✦ PLATFORM OWNER</span>' : '';
+      const ownerMark = m.senderIsFounder ? '<span class="owner-message-badge">✦ PLATFORM FOUNDER</span>' : '';
       const quote = m.replyToId && m.replyContent ? `<div class="reply-quote"><strong>${esc(m.replySenderUsername || 'Message')}</strong><span>${esc(m.replyContent)}</span></div>` : '';
       const avatar = avatarMarkup(own ? state.user?.avatarUrl : m.senderAvatarUrl, own ? state.user?.username : m.senderUsername, 'message-avatar');
-      return `<div class="message-row ${own ? 'own-message' : ''}" data-message-row="${esc(m.id)}">${avatar}<div class="message-bubble-wrap"><button class="message-reply-button" type="button" data-reply-id="${esc(m.id)}" title="Reply to this message" aria-label="Reply to this message">↶</button><div class="message-bubble">${ownerMark}${!own ? `<strong class="message-sender-name">${esc(m.senderUsername)}</strong>` : ''}${quote}<div class="message-content">${esc(m.content)}</div><span class="message-meta">${esc(formatTime(m.createdAt))}</span></div></div></div>`;
+      const reactions = m.reactions.map(reaction => `<button type="button" class="reaction-chip ${reaction.reacted ? 'reacted' : ''}" data-react-message="${esc(m.id)}" data-emoji="${esc(reaction.emoji)}" aria-label="${esc(reaction.emoji)} reaction, ${Number(reaction.count)} total">${esc(reaction.emoji)} <span>${Number(reaction.count)}</span></button>`).join('');
+      const seen = own && m.readBy.length ? `<span class="seen-status" aria-label="Seen by ${m.readBy.length} member(s)">SEEN${m.readBy.length > 1 ? ` · ${m.readBy.length}` : ''}</span>` : '';
+      const quickReactions = REACTION_EMOJIS.map(emoji => `<button type="button" class="quick-reaction" data-react-message="${esc(m.id)}" data-emoji="${emoji}" aria-label="React with ${emoji}">${emoji}</button>`).join('');
+      return `<div class="message-row ${own ? 'own-message' : ''}" data-message-row="${esc(m.id)}">${avatar}<div class="message-bubble-wrap"><button class="message-reply-button" type="button" data-reply-id="${esc(m.id)}" title="Reply to this message" aria-label="Reply to this message">↶</button><div class="message-bubble">${ownerMark}${!own ? `<strong class="message-sender-name">${esc(m.senderUsername)}</strong>` : ''}${quote}<div class="message-content">${esc(m.content)}</div><div class="message-reactions">${reactions}</div><div class="message-actions">${quickReactions}</div><span class="message-meta">${esc(formatTime(m.createdAt))}${seen}</span></div></div></div>`;
     }).join('');
     box.scrollTop = box.scrollHeight;
   }
@@ -113,10 +120,17 @@
   async function openConversation(id) {
     const conversation = state.conversations.find(c => sameId(c.id,id));
     if (!conversation) return;
+    state.typingUsers.clear();
+    state.remoteTypingTimers.forEach(timer => clearTimeout(timer));
+    state.remoteTypingTimers.clear();
+    renderTypingIndicator();
     state.activeId = conversation.id; state.activeConversation = conversation; clearReply();
     $('chatEmptyState').hidden = true; $('activeChat').hidden = false;
     $('activeChatName').textContent = conversation.name;
-    $('activeChatSubtitle').textContent = conversation.type === 'group' ? 'GROUP CHAT' : (conversation.other_role === 'admin' ? 'PLATFORM OWNER · PRIVATE CHAT' : (conversation.other_profile_public === false ? 'PRIVATE PROFILE' : 'PRIVATE CHAT'));
+    const activeSubtitle = $('activeChatSubtitle');
+    const isOnline = conversation.type === 'private' && state.onlineUsers.has(String(conversation.other_user_id));
+    activeSubtitle.textContent = conversation.type === 'group' ? 'GROUP CHAT' : isOnline ? 'ONLINE' : (conversation.other_is_founder ? 'PLATFORM FOUNDER' : conversation.other_role === 'admin' ? 'PLATFORM ADMIN' : (conversation.other_profile_public === false ? 'PRIVATE PROFILE' : 'OFFLINE'));
+    $('activePresenceDot')?.classList.toggle('is-online', isOnline);
     const headerAvatar = $('activeChatAvatar');
     if (headerAvatar) headerAvatar.outerHTML = avatarMarkup(conversation.other_avatar_url, conversation.name, 'chat-avatar active-chat-avatar').replace('chat-avatar active-chat-avatar','chat-avatar active-chat-avatar" id="activeChatAvatar');
     $('chatMain').classList.add('mobile-active'); $('chatSidebar').classList.add('mobile-hidden');
@@ -149,7 +163,70 @@
       const c = state.conversations.find(x => sameId(x.id,message.conversationId)); if (c) c.lastMessage = message.content;
       renderConversations(); loadConversations().catch(() => {});
     });
-    state.socket.on('chat:read:update', () => {});
+    state.socket.on('presence:snapshot', users => {
+      state.onlineUsers = new Set((users || []).map(user => String(user.userId)));
+      renderConversations();
+      if (state.activeConversation) openConversation(state.activeId).catch(() => {});
+    });
+    state.socket.on('presence:update', update => {
+      const key = String(update.userId);
+      if (update.online) state.onlineUsers.add(key); else state.onlineUsers.delete(key);
+      renderConversations();
+      if (state.activeConversation && sameId(state.activeConversation.other_user_id, update.userId)) {
+        const online = update.online === true;
+        $('activeChatSubtitle').textContent = online ? 'ONLINE' : (state.activeConversation.other_is_founder ? 'PLATFORM FOUNDER' : state.activeConversation.other_role === 'admin' ? 'PLATFORM ADMIN' : 'OFFLINE');
+        $('activePresenceDot')?.classList.toggle('is-online', online);
+      }
+    });
+    state.socket.on('chat:typing', update => {
+      if (!sameId(update.conversationId, state.activeId) || sameId(update.userId, state.user?.id)) return;
+      if (update.typing) state.typingUsers.set(String(update.userId), update.username);
+      else state.typingUsers.delete(String(update.userId));
+      renderTypingIndicator();
+      clearTimeout(state.remoteTypingTimers.get(String(update.userId)));
+      state.remoteTypingTimers.delete(String(update.userId));
+      if (update.typing) {
+        const timer = setTimeout(() => {
+          state.typingUsers.delete(String(update.userId));
+          state.remoteTypingTimers.delete(String(update.userId));
+          renderTypingIndicator();
+        }, 3000);
+        state.remoteTypingTimers.set(String(update.userId), timer);
+      }
+    });
+    state.socket.on('chat:read:update', update => {
+      if (!sameId(update.conversationId, state.activeId)) return;
+      const readerId = String(update.userId);
+      (update.messageIds || []).forEach(id => {
+        const message = state.messages.find(item => sameId(item.id, id));
+        if (message && !sameId(message.senderId, readerId) && !message.readBy.includes(readerId)) message.readBy.push(readerId);
+      });
+      renderMessages();
+    });
+    state.socket.on('chat:reaction:update', update => {
+      const message = state.messages.find(item => sameId(item.id, update.messageId));
+      if (message) { message.reactions = update.reactions || []; renderMessages(); }
+    });
+  }
+
+  function renderTypingIndicator() {
+    const names = [...state.typingUsers.values()];
+    const indicator = $('typingIndicator');
+    indicator.hidden = names.length === 0;
+    indicator.textContent = names.length ? `${names.slice(0, 2).join(', ')} ${names.length === 1 ? 'is' : 'are'} typing…` : '';
+  }
+
+  function notifyTyping() {
+    if (!state.activeId || !state.socket?.connected) return;
+    const now = Date.now();
+    if (now - state.lastTypingAt > 900) {
+      state.socket.emit('chat:typing', { conversationId: state.activeId, typing: true });
+      state.lastTypingAt = now;
+    }
+    clearTimeout(state.localTypingTimer);
+    state.localTypingTimer = setTimeout(() => {
+      state.socket?.emit('chat:typing', { conversationId: state.activeId, typing: false });
+    }, 1400);
   }
 
   async function searchUsers(query) {
@@ -188,6 +265,8 @@
       const message = normalizeMessage(response.message);
       if (!state.messages.some(m => sameId(m.id,message.id))) { state.messages.push(message); renderMessages(); }
       loadConversations().catch(() => {});
+      clearTimeout(state.localTypingTimer);
+      state.socket.emit('chat:typing', { conversationId: state.activeId, typing: false });
     });
   }
 
@@ -202,6 +281,7 @@
     $('groupForm').addEventListener('submit', createGroup); $('messageForm').addEventListener('submit', sendMessage);
     $('messageInput').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('messageForm').requestSubmit(); } });
     $('messageInput').addEventListener('input', event => { event.target.style.height = 'auto'; event.target.style.height = `${Math.min(event.target.scrollHeight,120)}px`; });
+    $('messageInput').addEventListener('input', notifyTyping);
     $('conversationList').addEventListener('click', event => { const item = event.target.closest('[data-conversation-id]'); if (item) openConversation(item.dataset.conversationId).catch(error => notify(error.message)); });
     $('conversationList').addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { const item = event.target.closest('[data-conversation-id]'); if (item) { event.preventDefault(); openConversation(item.dataset.conversationId).catch(error => notify(error.message)); } } });
     $('conversationSearch').addEventListener('input', renderConversations);
@@ -209,7 +289,17 @@
     $('mobileBackButton').addEventListener('click', () => { $('chatMain').classList.remove('mobile-active'); $('chatSidebar').classList.remove('mobile-hidden'); });
     $('chatInfoButton').addEventListener('click', () => { if (!state.activeId) return; $('chatInfoPanel').classList.toggle('mobile-open'); loadConversationInfo(state.activeId); });
     $('closeInfoPanel').addEventListener('click', () => $('chatInfoPanel').classList.remove('mobile-open'));
-    $('messageContainer').addEventListener('click', event => { const button = event.target.closest('[data-reply-id]'); if (button) beginReply(button.dataset.replyId); });
+    $('messageContainer').addEventListener('click', event => {
+      const replyButton = event.target.closest('[data-reply-id]');
+      if (replyButton) { beginReply(replyButton.dataset.replyId); return; }
+      const reactionButton = event.target.closest('[data-react-message]');
+      if (!reactionButton || !state.activeId || !state.socket?.connected) return;
+      state.socket.emit('chat:reaction', {
+        conversationId: state.activeId,
+        messageId: Number(reactionButton.dataset.reactMessage),
+        emoji: reactionButton.dataset.emoji
+      }, response => { if (!response?.success) notify(response?.error || 'Reaction could not be saved.'); });
+    });
   }
 
   async function init() {

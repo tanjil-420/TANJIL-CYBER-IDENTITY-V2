@@ -111,6 +111,14 @@ function renderLoggedIn(user, profile) {
     menuAccount.append(logout);
 
     document.querySelectorAll("[data-auth-only]").forEach(link => { link.hidden = false; });
+    document.querySelectorAll("[data-admin-only]").forEach(link => { link.hidden = user.role !== "admin"; });
+    if (user.role === "admin") {
+        const ownerCenter = document.createElement("a");
+        ownerCenter.className = "nav-register";
+        ownerCenter.href = "/admin.html";
+        ownerCenter.textContent = "OWNER CONTROL CENTER";
+        navActions.append(ownerCenter);
+    }
     $("memberArea").hidden = false;
     const displayName = profile.displayName || user.username;
     $("memberDisplayName").textContent = displayName;
@@ -119,6 +127,10 @@ function renderLoggedIn(user, profile) {
     $("memberEducation").textContent = profile.education || "Education not added";
     $("memberLocation").textContent = profile.location || "Location not added";
     $("memberRole").textContent = String(user.role || "user").toUpperCase();
+    const rank = document.createElement("span");
+    rank.className = "member-rank";
+    rank.textContent = profile.rankTitle || "BEGINNER";
+    $("memberMeta")?.append(rank);
     if (profile.avatarUrl) {
         const avatarImage = document.createElement("img");
         avatarImage.src = profile.avatarUrl;
@@ -127,10 +139,10 @@ function renderLoggedIn(user, profile) {
     } else {
         $("memberAvatar").textContent = displayName.charAt(0).toUpperCase();
     }
-    if (user.role === "admin") {
+    if (user.isFounder) {
         const premium = document.createElement("span");
         premium.className = "premium-tag";
-        premium.textContent = "✦ PLATFORM OWNER · PREMIUM";
+        premium.textContent = "✦ PLATFORM OWNER · FOUNDER";
         $("memberMeta")?.append(premium);
     }
     $("heroTitle").innerHTML = `WELCOME BACK,<br><span>${escapeHtml(displayName.toUpperCase())}.</span>`;
@@ -246,11 +258,5 @@ registerForm.addEventListener("submit", async event => {
     }
 });
 
-const themeToggle = $("themeToggle");
-if (localStorage.getItem("tanjil-theme") === "light") document.body.classList.add("light-theme");
-themeToggle?.addEventListener("click", () => {
-    document.body.classList.toggle("light-theme");
-    localStorage.setItem("tanjil-theme", document.body.classList.contains("light-theme") ? "light" : "dark");
-});
 loadStats();
 checkAuthentication();
