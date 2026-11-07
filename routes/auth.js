@@ -158,9 +158,9 @@ router.post("/login", async (req, res, next) => {
 router.get("/me", requireAuth, async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT u.id, u.username, u.email, u.role, u.created_at,
+            `SELECT u.id, u.username, u.email, u.role, u.is_platform_owner, u.created_at,
                     p.display_name, p.bio, p.education, p.location,
-                    p.status, p.skills, p.avatar_url, p.is_public
+                    p.status, p.skills, p.avatar_url, p.rank_title, p.is_public
              FROM users u
              LEFT JOIN profiles p ON p.user_id = u.id
              WHERE u.id = $1`,
@@ -180,6 +180,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
                 username: row.username,
                 email: row.email,
                 role: row.role,
+                isFounder: row.is_platform_owner === true,
                 createdAt: row.created_at
             },
             profile: {
@@ -190,6 +191,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
                 status: row.status,
                 skills: row.skills || [],
                 avatarUrl: row.avatar_url || "",
+                rankTitle: row.rank_title || "BEGINNER",
                 isPublic: row.is_public
             }
         });

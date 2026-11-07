@@ -301,6 +301,7 @@ router.get("/conversations", async (req, res, next) => {
                 (SELECT p.avatar_url FROM conversation_members other_member JOIN profiles p ON p.user_id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_avatar_url,
                 (SELECT p.is_public FROM conversation_members other_member JOIN profiles p ON p.user_id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_profile_public,
                 (SELECT u.role FROM conversation_members other_member JOIN users u ON u.id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_role,
+                (SELECT u.is_platform_owner FROM conversation_members other_member JOIN users u ON u.id = other_member.user_id WHERE other_member.conversation_id = c.id AND other_member.user_id != $1 LIMIT 1) AS other_is_founder,
                 (
                     SELECT m.content
                     FROM messages m
@@ -349,7 +350,7 @@ router.get("/:id/info", async (req, res, next) => {
         const profiles = members.rows.map(row => ({ username: row.username, displayName: row.display_name || row.username, avatarUrl: row.avatar_url || "",
             isPublic: row.is_public === true, publicId: row.is_public === true ? "@" + row.username : null,
             bio: row.is_public === true ? (row.bio || "") : "", skills: row.is_public === true && Array.isArray(row.skills) ? row.skills : [],
-            profileUrl: row.is_public === true ? "/public-profile.html?username=" + encodeURIComponent(row.username) : null }));
+            profileUrl: row.is_public === true ? "/user/" + encodeURIComponent(row.username) : null }));
         res.json({ success: true, conversation: conversation.rows[0], members: profiles });
     } catch (error) { next(error); }
 });
@@ -386,8 +387,27 @@ router.get("/:id/messages", async (req, res, next) => {
         const result = await pool.query(
             `SELECT m.id, m.conversation_id, m.sender_id, m.reply_to_id,
                     m.content, m.message_type, m.created_at,
-                    u.username AS sender_username, u.role AS sender_role, p.avatar_url AS sender_avatar_url,
-                    r.content AS reply_content, ru.username AS reply_sender_username
+                    u.username AS sender_username, u.role AS sender_role, u.is_platform_owner AS sender_is_founder, p.avatar_url AS sender_avatar_url,
+                    r.content AS reply_content, ru.username AS reply_sender_username,
+                    ARRAY(
+                        SELECT receipt.user_id::text
+                        FROM message_read_receipts receipt
+                        WHERE receipt.message_id = m.id AND receipt.user_id <> $3
+                    ) AS read_by,
+                    (
+                        SELECT COALESCE(json_agg(json_build_object(
+                            'emoji', grouped.emoji,
+                            'count', grouped.reaction_count,
+                            'reacted', grouped.reacted
+                        )), '[]'::json)
+                        FROM (
+                            SELECT emoji, COUNT(*)::int AS reaction_count,
+                                   BOOL_OR(user_id = $3) AS reacted
+                            FROM message_reactions
+                            WHERE message_id = m.id
+                            GROUP BY emoji
+                        ) grouped
+                    ) AS reactions
              FROM messages m
              LEFT JOIN users u ON u.id = m.sender_id
              LEFT JOIN profiles p ON p.user_id = u.id
@@ -396,7 +416,7 @@ router.get("/:id/messages", async (req, res, next) => {
              WHERE m.conversation_id = $1
              AND ($2::bigint IS NULL OR m.id < $2)
              ORDER BY m.id DESC LIMIT 50`,
-            [conversationId, beforeId]
+            [conversationId, beforeId, req.user.id]
         );
 
         res.json({

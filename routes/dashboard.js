@@ -11,7 +11,7 @@ router.get("/", async (req, res, next) => {
         const result = await pool.query(
             `SELECT u.id, u.username, u.email, u.role, u.is_active, u.created_at,
                     p.display_name, p.bio, p.location, p.education,
-                    p.skills, p.is_public
+                    p.skills, p.rank_title, p.is_public
              FROM users u
              LEFT JOIN profiles p ON p.user_id = u.id
              WHERE u.id = $1`,
@@ -31,7 +31,7 @@ router.get("/", async (req, res, next) => {
         );
 
         const baseUrl = (process.env.APP_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME || "localhost:3000"}`).replace(/\/+$/, "");
-        const publicProfileUrl = `${baseUrl}/public-profile.html?username=${encodeURIComponent(row.username)}`;
+        const publicProfileUrl = `${baseUrl}/user/${encodeURIComponent(row.username)}`;
         const qrCodeUrl = await QRCode.toDataURL(publicProfileUrl, { errorCorrectionLevel: "H", width: 800, margin: 2 });
 
         res.json({
@@ -51,6 +51,7 @@ router.get("/", async (req, res, next) => {
                 location: row.location,
                 education: row.education,
                 skills: row.skills || [],
+                rankTitle: row.rank_title || "BEGINNER",
                 isPublic: row.is_public
             },
             unreadMessages: Number(unreadResult.rows[0].total || 0),

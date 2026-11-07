@@ -60,6 +60,7 @@ function formatDate(value) {
 function renderDashboard(data) {
     const user = data.user;
     const profile = data.profile || {};
+    document.querySelectorAll("[data-admin-only]").forEach(link => { link.hidden = user.role !== "admin"; });
 
     dashboardData = data;
 
@@ -73,6 +74,7 @@ function renderDashboard(data) {
     setText("welcomeUsername", displayName);
     setText("profileDisplayName", displayName);
     setText("profileUsername", "@" + user.username);
+    setText("profileRank", profile.rankTitle || "BEGINNER");
 
     setText(
         "profileBio",
@@ -110,7 +112,7 @@ function renderDashboard(data) {
 
     const profileUrl =
         data.publicProfileUrl ||
-        (user.username ? `/u/${encodeURIComponent(user.username)}` : "");
+        (user.username ? `/user/${encodeURIComponent(user.username)}` : "");
 
     const publicLink = $("publicProfileLink");
 

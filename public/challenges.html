@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b14">
+  <meta name="description" content="Join skill-based community challenges, submit projects and get reviewed feedback.">
+  <title>Skill Challenges | TANJIL.EXE</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/css/challenges.css">
+  <script src="/js/theme.js" defer></script>
+  <script src="/js/challenges.js" defer></script>
+</head>
+<body>
+  <header class="navbar challenge-nav">
+    <a href="/" class="logo">TANJIL<span>.EXE</span></a>
+    <nav><a href="/skill-test.html">7-DAY SKILL TEST</a><a href="/dashboard.html">DASHBOARD</a></nav>
+  </header>
+  <main class="challenge-page">
+    <section class="challenge-hero">
+      <span class="eyebrow">LEARN BY BUILDING</span>
+      <h1>SKILL CHALLENGES</h1>
+      <p>Choose a brief, build something useful, and share your work for thoughtful community review.</p>
+    </section>
+    <p class="challenge-feedback" id="challengeFeedback" role="status" aria-live="polite"></p>
+    <section class="challenge-admin-panel" id="challengeCreatePanel" hidden>
+      <div class="challenge-section-heading"><div><span>OWNER CONTROL</span><h2>CREATE A CHALLENGE</h2></div></div>
+      <form id="challengeCreateForm" class="challenge-create-form">
+        <label>CHALLENGE TITLE<input name="title" maxlength="100" required placeholder="Example: Build a responsive dashboard"></label>
+        <label>SKILL CATEGORY<input name="skillName" maxlength="80" required placeholder="Web Development"></label>
+        <label>CHALLENGE BRIEF<textarea name="description" maxlength="2500" required rows="4" placeholder="Describe the goal, constraints and what members should practice."></textarea></label>
+        <label>EXPECTED DELIVERABLE<input name="deliverable" maxlength="500" placeholder="Demo link, repository and a short walkthrough"></label>
+        <button class="challenge-button" type="submit">PUBLISH CHALLENGE</button>
+      </form>
+    </section>
+    <section class="challenge-admin-panel" id="challengeReviewPanel" hidden>
+      <div class="challenge-section-heading"><div><span>OWNER CONTROL</span><h2>SUBMISSION REVIEW</h2></div><button id="refreshReviews" type="button" class="quiet-button">REFRESH QUEUE</button></div>
+      <div id="challengeReviewQueue" class="challenge-review-queue"><p class="challenge-muted">Loading review queue…</p></div>
+    </section>
+    <section class="challenge-list-section">
+      <div class="challenge-section-heading"><div><span>OPEN PROJECT BRIEFS</span><h2>FIND YOUR NEXT BUILD</h2></div><button id="refreshChallenges" type="button" class="quiet-button">REFRESH</button></div>
+      <div class="challenge-grid" id="challengeList"><p class="challenge-muted">Loading challenges…</p></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,6 +1,6 @@
-TANJIL.EXE — CYBER IDENTITY PLATFORM v2.1
+TANJIL CYBER IDENTITY — COMMUNITY PLATFORM v2.5
 
-A Node.js + Express + PostgreSQL platform for personal profiles, public learning guides, visitor/member statistics and private/group messaging.
+A Node.js + Express + PostgreSQL community platform for public profiles, skill learning, events, project challenges and private/group messaging.
 
 REQUIREMENTS
 - Node.js >=20 and <27
@@ -27,6 +27,10 @@ FEATURES
 - Unique visitor and registered member counters
 - Public profile and QR code
 - Private/group Messenger with Socket.IO
-- Admin API
+- Owner control center for analytics, members, ranks and challenge reviews
+- Messenger reactions, seen receipts, typing and online presence
+- Five shared themes and mobile navigation
+- Skill challenges with project submissions, reviews and achievements
+- Public member ranks, approved projects and achievements
 
-V2.3: 7-Day Skill Test event, Owner submission review, achievement ranks, Messenger replies, circular profile avatars and public/private profile ID info. Run the updated schema on startup by deploying the included files.
+See V2.5_IMPLEMENTATION_PLAN.md for implementation scope and remaining production rollout.

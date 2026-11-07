@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b14">
+  <title>Owner Control Center | TANJIL.EXE</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="/js/theme.js" defer></script>
+  <script src="/js/admin.js" defer></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a class="logo" href="/">TANJIL<span>.EXE</span></a>
+    <nav aria-label="Owner navigation">
+      <a href="/dashboard.html">DASHBOARD</a>
+      <a href="/skill-test.html">EVENT REVIEW</a>
+      <a href="/challenges.html">CHALLENGES</a>
+      <a href="/messenger.html">MESSENGER</a>
+    </nav>
+  </header>
+  <main class="admin-content">
+    <section class="admin-hero">
+      <div><span class="admin-eyebrow" id="adminEyebrow">PLATFORM ADMIN · PRIVATE</span><h1>CONTROL CENTER</h1><p>Platform operations, member access and event review at a glance.</p></div>
+      <span class="admin-status"><i></i><span id="adminAccessStatus">ADMIN ACCESS VERIFIED</span></span>
+    </section>
+    <p class="admin-feedback" id="adminFeedback" role="status" aria-live="polite"></p>
+    <section class="admin-section" aria-labelledby="analyticsHeading">
+      <div class="admin-section-heading"><div><span>OVERVIEW</span><h2 id="analyticsHeading">PLATFORM ANALYTICS</h2></div><button id="refreshAdmin" type="button">REFRESH</button></div>
+      <div class="admin-stat-grid" id="adminStats"><p class="admin-loading">Loading platform analytics…</p></div>
+    </section>
+    <section class="admin-section" aria-labelledby="membersHeading">
+      <div class="admin-section-heading"><div><span>ACCESS CONTROL</span><h2 id="membersHeading">MEMBER MANAGEMENT</h2></div></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>MEMBER</th><th>EMAIL</th><th>ROLE</th><th>RANK</th><th>STATUS</th><th>JOINED</th><th>ACTIONS</th></tr></thead>
+          <tbody id="adminUsers"><tr><td colspan="7" class="admin-loading">Loading members…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="admin-section admin-event-panel">
+      <div><span>LEARNING & EVENTS</span><h2>SKILL TEST REVIEW QUEUE</h2><p>Review submitted work, approve progress or request a revision with feedback.</p></div>
+      <a class="admin-action" href="/skill-test.html#adminReviewPanel">OPEN EVENT REVIEWS ↗</a>
+    </section>
+    <section class="admin-section admin-event-panel">
+      <div><span>SKILL-BASED PROJECTS</span><h2>COMMUNITY CHALLENGES</h2><p>Create and close challenges by skill, then review member submissions and request revisions.</p></div>
+      <a class="admin-action" href="/challenges.html">MANAGE CHALLENGES ↗</a>
+    </section>
+    <footer class="admin-footer">TANJIL CYBER IDENTITY · OWNER CONTROL CENTER</footer>
+  </main>
+</body>
+</html>

@@ -21,6 +21,7 @@ const chatRoutes = require("./routes/chat");
 const siteRoutes = require("./routes/site");
 const dashboardRoutes = require("./routes/dashboard");
 const skillTestRoutes = require("./routes/skill-test");
+const challengeRoutes = require("./routes/challenges");
 
 const app = express();
 const server = http.createServer(app);
@@ -55,6 +56,10 @@ app.use(helmet({
 
 app.use(express.json({ limit: "600kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
+app.use((req, res, next) => {
+    if (req.body === undefined) req.body = {};
+    next();
+});
 
 const sessionStore = new pgSession({
     pool,
@@ -77,6 +82,21 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+
+app.use((req, res, next) => {
+    if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return next();
+    const origin = req.get("origin");
+    if (!origin) return next();
+    try {
+        const requestOrigin = new URL(`${req.protocol}://${req.get("host")}`).origin;
+        if (new URL(origin).origin !== requestOrigin) {
+            return res.status(403).json({ error: "Cross-origin request rejected." });
+        }
+    } catch {
+        return res.status(403).json({ error: "Invalid request origin." });
+    }
+    next();
+});
 
 const io = new Server(server, {
     maxHttpBufferSize: 1e6,
@@ -103,6 +123,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/site", siteRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/skill-test", skillTestRoutes);
+app.use("/api/challenges", challengeRoutes);
 
 app.get("/api/health", async (req, res) => {
     try {
@@ -118,6 +139,13 @@ app.get("/api/health", async (req, res) => {
                 to_regclass('public.site_visitors') IS NOT NULL AS site_visitors,
                 to_regclass('public.skill_test_enrollments') IS NOT NULL AS skill_test_enrollments,
                 to_regclass('public.skill_test_tasks') IS NOT NULL AS skill_test_tasks,
+                to_regclass('public.message_reactions') IS NOT NULL AS message_reactions,
+                to_regclass('public.message_read_receipts') IS NOT NULL AS message_read_receipts,
+                to_regclass('public.user_achievements') IS NOT NULL AS user_achievements,
+                to_regclass('public.challenges') IS NOT NULL AS challenges,
+                to_regclass('public.challenge_submissions') IS NOT NULL AS challenge_submissions,
+                EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_platform_owner') AS platform_owner_column,
+                EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'rank_title') AS profile_rank_column,
                 EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'reply_to_id') AS message_replies
         `);
         const tables = result.rows[0];
@@ -127,7 +155,7 @@ app.get("/api/health", async (req, res) => {
         res.status(schemaReady ? 200 : 503).json({
             status: schemaReady ? "online" : "incomplete",
             project: "TANJIL CYBER IDENTITY",
-            version: "2.4.0",
+            version: "2.5.0",
             database: "connected",
             schema: schemaReady ? "ready" : "incomplete",
             tables,
@@ -145,6 +173,10 @@ app.use(express.static(path.join(__dirname, "public"), {
     index: "index.html",
     maxAge: isProduction ? "1h" : 0
 }));
+
+app.get(["/user/:username", "/u/:username"], (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "public-profile.html"));
+});
 
 app.use("/api", (req, res) => {
     res.status(404).json({ error: "API endpoint not found." });
@@ -176,8 +208,8 @@ async function bootstrapAdmin() {
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             throw new Error("Admin account not found. Set ADMIN_EMAIL once to create it, or register this username first.");
         }
-        if (password.length < 5 || password.length > 72) {
-            throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+        if (password.length < 12 || password.length > 72) {
+            throw new Error("ADMIN_PASSWORD must contain at least 12 characters.");
         }
         const bcrypt = require("bcryptjs");
         const hash = await bcrypt.hash(password, 12);
@@ -187,10 +219,8 @@ async function bootstrapAdmin() {
         );
         await pool.query("INSERT INTO profiles (user_id, display_name) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING", [created.rows[0].id, username]);
         console.log(`Admin account created: @${username}`);
-        return;
-    }
-    if (password) {
-        if (password.length < 5 || password.length > 72) throw new Error("ADMIN_PASSWORD must contain at least 5 characters.");
+    } else if (password) {
+        if (password.length < 12 || password.length > 72) throw new Error("ADMIN_PASSWORD must contain at least 12 characters.");
         const bcrypt = require("bcryptjs");
         const hash = await bcrypt.hash(password, 12);
         await pool.query("UPDATE users SET role = 'admin', password_hash = $1, updated_at = NOW() WHERE username = $2", [hash, username]);
@@ -198,6 +228,19 @@ async function bootstrapAdmin() {
     } else {
         await pool.query("UPDATE users SET role = 'admin', updated_at = NOW() WHERE username = $1", [username]);
         console.log(`Admin role verified: @${username}`);
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await client.query("UPDATE users SET is_platform_owner = FALSE WHERE is_platform_owner = TRUE");
+        await client.query("UPDATE users SET role = 'admin', is_platform_owner = TRUE, updated_at = NOW() WHERE username = $1", [username]);
+        await client.query("COMMIT");
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
     }
 }
 
@@ -209,7 +252,7 @@ async function startServer() {
 
         server.listen(PORT, "0.0.0.0", () => {
             console.log("--------------------------------");
-            console.log(" TANJIL CYBER IDENTITY V2.4");
+            console.log(" TANJIL CYBER IDENTITY V2.5");
             console.log("--------------------------------");
             console.log(`Server: http://localhost:${PORT}`);
             console.log("Database: Connected");
