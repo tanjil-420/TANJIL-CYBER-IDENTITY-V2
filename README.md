@@ -44,10 +44,10 @@ Set the environment variables in the Render Web Service's Environment settings. 
 
 ## Admin console configuration
 
-The admin console reads its workspace descriptions and operational notes from `config/config.json` through the authenticated `GET /api/admin/configuration` endpoint. The JSON is server-side configuration, not a public static file. Keep it limited to non-sensitive descriptions; credentials and bootstrap values belong only in deployment environment variables.
+The admin console reads its workspace descriptions and operational notes from the repository-root `config.json` through the authenticated `GET /api/admin/configuration` endpoint. The JSON is server-side configuration, not a public static file. Keep it limited to non-sensitive descriptions; credentials and bootstrap values belong only in deployment environment variables.
 
 ## Platform-owner setup
-Set `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD` in Render Environment to promote an existing account to admin and initialize its password. For a brand-new admin account, also set `ADMIN_EMAIL` (a real email address). The bootstrap password must be at least 12 characters. Remove `ADMIN_PASSWORD` after successful deployment so restarts do not reset the password. Regular registrations require at least 6 characters.
+Set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_EMAIL` in Render Environment, not in `config.json`, `.env.example`, or committed files. Use a unique password of at least 12 characters. The bootstrap password initializes or resets the configured account password at application startup, so remove `ADMIN_PASSWORD` after the owner has been initialized to prevent later restarts from resetting a changed password. Regular registrations require at least 6 characters. Credentials shared in chat or committed files should be treated as compromised and rotated immediately.
 
 
 ## V2.3 — Seven-Day Skill Test + Messenger upgrades
@@ -64,7 +64,7 @@ Upload the project files to the GitHub repository and deploy. The startup migrat
 
 ### Owner account bootstrap
 
-For an existing registered owner account, set `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD` in Render once. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it.
+For an existing registered owner account, set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in Render to initialize it. If the username does not exist yet, also set `ADMIN_EMAIL` so startup can create it. After the first successful boot, remove `ADMIN_PASSWORD` from Render so future restarts do not reset it.
 
 
 ## V2.4 Notes
@@ -90,7 +90,7 @@ Do not double-click `.js` files such as `config/database.js`. They are Node.js s
 
 Create these as three separate Environment Variables in Render (do not paste them as one combined line):
 
-- `ADMIN_USERNAME` = `tanjil.4x`
+- `ADMIN_USERNAME` = your owner username
 - `ADMIN_PASSWORD` = your chosen strong admin password (at least 12 characters)
 - `ADMIN_EMAIL` = your full, correct email address (use `gmail.com`, not a misspelling)
 

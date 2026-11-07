@@ -1,7 +1,7 @@
 
 const express = require("express");
 const { pool } = require("../config/database");
-const adminConfig = require("../config/config.json").admin;
+const adminConfig = require("../config.json").admin;
 const {
     requireAuth,
     requireAdmin

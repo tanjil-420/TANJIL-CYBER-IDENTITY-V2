@@ -145,9 +145,14 @@ function renderLoggedIn(user, profile) {
         premium.textContent = "✦ PLATFORM OWNER · FOUNDER";
         $("memberMeta")?.append(premium);
     }
-    $("heroTitle").innerHTML = `WELCOME BACK,<br><span>${escapeHtml(displayName.toUpperCase())}.</span>`;
-    $("heroUsername").textContent = `@${user.username} · YOUR PERSONAL SPACE`;
-    $("heroEyebrow").textContent = "YOUR DIGITAL IDENTITY IS ACTIVE";
+    const heroGreeting = user.isFounder ? "WELCOME, PLATFORM OWNER" : "WELCOME BACK";
+    $("heroTitle").innerHTML = `${heroGreeting}<br><span>${escapeHtml(displayName.toUpperCase())}.</span>`;
+    $("heroUsername").textContent = user.isFounder
+        ? `@${user.username} · OWNER ACCESS VERIFIED`
+        : `@${user.username} · YOUR PERSONAL SPACE`;
+    $("heroEyebrow").textContent = user.isFounder
+        ? "PLATFORM OWNER ACCESS VERIFIED"
+        : "YOUR DIGITAL IDENTITY IS ACTIVE";
     $("systemStatus").textContent = "SIGNED IN";
     $("heroJoinButton").hidden = true;
 
